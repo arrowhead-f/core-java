@@ -9,107 +9,128 @@
 
 package eu.arrowhead.core.systemregistry;
 
-import eu.arrowhead.core.systemregistry.model.AHSystem;
 import java.util.List;
+
+import javax.persistence.EntityNotFoundException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.UriInfo;
+
 import org.apache.log4j.Logger;
+
+import eu.arrowhead.common.RegistryResource;
+import eu.arrowhead.common.exception.ArrowheadException;
+import eu.arrowhead.core.systemregistry.model.SystemRegistryEntry;
 
 @Path("systemregistry")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
-public class SystemRegistryResource {
+public class SystemRegistryResource implements RegistryResource<SystemRegistryEntry, Response> {
+	private final Logger log = Logger.getLogger(SystemRegistryResource.class.getName());
+	private final SystemRegistryService registryService;
 
-	private static final Logger log = Logger.getLogger(SystemRegistryResource.class.getName());
+	public SystemRegistryResource() throws ExceptionInInitializerError {
+		super();
+		registryService = new SystemRegistryService();
+		log.info(SystemRegistryResource.class.getSimpleName() + " created");
+	}
 
 	@GET
 	@Produces(MediaType.TEXT_PLAIN)
-	public String getIt() {
-		return "This is the System Registry Arrowhead Core System.";
+	public Response ping() {
+		return Response.status(Response.Status.OK).entity("This is the System Registry Arrowhead Core System.").build();
 	}
 
 	@GET
-	@Path("lookup")
-	public Response Lookup(@QueryParam("id") String id) throws Exception {
-		//SystemRegistryHAAASALMySql sr = new SystemRegistryHAAASALMySql();
-		SystemRegistryService srs = new SystemRegistryService();
-		List<AHSystem> systems = srs.Lookup(id);
-		GenericEntity entity = new GenericEntity<List<AHSystem>>(systems) {
-		};
+	@Path(LOOKUP_PATH)
+	public Response lookup(@Context final UriInfo uriInfo, @PathParam("id") final Long id) {
+		SystemRegistryEntry returnValue;
+		Response response;
 
-		return Response.status(200).entity(entity).build();
+		try {
+			log.info(String.format("request: GET %s", uriInfo.getPath()));
+			returnValue = registryService.lookup(id);
+			response = createSuccessResponse(returnValue, Status.OK);
+		} catch (final EntityNotFoundException e) {
+			response = createNotFoundResponse();
+		} catch (final ArrowheadException e) {
+			response = createArrowheadResponse(e);
+		} catch (final Exception e) {
+			response = createGenericErrorResponse(e);
+		}
+
+		log.info(String.format("response: GET %s - %d", uriInfo.getPath(), response.getStatus()));
+		return response;
 	}
 
 	@POST
-	@Path("publish")
-	public Response Publish(@QueryParam("id") String id) throws Exception {
-		Status status = null;
-		String message = "";
+	@Path(PUBLISH_PATH)
+	public Response publish(@Context final UriInfo uriInfo, final SystemRegistryEntry entry) {
+		SystemRegistryEntry returnValue;
+		Response response;
 
-		if (id == null) {
-			return Response.status(400).entity("Please provide an ID!").build();
+		try {
+			log.info(String.format("request: POST %s - body: %s", uriInfo.getPath(), entry));
+			returnValue = registryService.publish(entry);
+			response = createSuccessResponse(returnValue, Status.CREATED);
+		} catch (final ArrowheadException e) {
+			response = createArrowheadResponse(e);
+		} catch (final Exception e) {
+			response = createGenericErrorResponse(e);
 		}
 
-		//SystemRegistryHAAASALMySql sr = new SystemRegistryHAAASALMySql();
-		SystemRegistryService srs = new SystemRegistryService();
-		
-		status = srs.Publish(id);
-
-		switch (status) {
-		case CREATED:
-			// system was successfully published
-			message = "The System with the ID: '" + id + "' has been successfully published!";
-			break;
-		case CONFLICT:
-			// ID already exists
-			message = "The System-ID: '" + id
-					+ "' has already been published! Please unpublish the system and try publishing it again!";
-			break;
-		default:
-			message = "";
-			break;
-		}
-
-		return Response.status(status).entity(message).build();
+		log.info(String.format("response: POST %s - %d", uriInfo.getPath(), response.getStatus()));
+		return response;
 	}
 
 	@POST
-	@Path("unpublish")
-	public Response Unpublish(@QueryParam("id") String id) throws Exception {
-		Status status = null;
-		String message = "";
+	@Path(UNPUBLISH_PATH)
+	public Response unpublish(@Context final UriInfo uriInfo, final SystemRegistryEntry entry) {
+		SystemRegistryEntry returnValue;
+		Response response;
 
-		if (id == null) {
-			return Response.status(400).entity("Please provide an ID!").build();
+		try {
+			log.info(String.format("request: POST %s - body: %s", uriInfo.getPath(), entry));
+			returnValue = registryService.unpublish(entry);
+			response = createSuccessResponse(returnValue, Status.OK);
+		} catch (final EntityNotFoundException e) {
+			response = createNotFoundResponse();
+		} catch (final ArrowheadException e) {
+			response = createArrowheadResponse(e);
+		} catch (final Exception e) {
+			response = createGenericErrorResponse(e);
 		}
 
-		//SystemRegistryHAAASALMySql sr = new SystemRegistryHAAASALMySql();
-		SystemRegistryService srs = new SystemRegistryService();
-		
-		status = srs.Unpublish(id);
+		log.info(String.format("response: POST %s - %d", uriInfo.getPath(), response.getStatus()));
+		return response;
+	}
 
-		switch (status) {
-		case OK:
-			// system was successfully unpublished
-			message = "The System with the ID: '" + id + "' has been successfully unpublished!";
-			break;
-		case NOT_FOUND:
-			// ID already exists
-			message = "The System-ID: '" + id + "' could not be found in the SystemRegistry! System does not exist!";
-			break;
-		default:
-			message = "";
-			break;
-		}
-		
-		return Response.status(status).entity(message).build();
+	protected Response createSuccessResponse(final SystemRegistryEntry entity, final Status status) {
+		return Response.status(status).entity(entity).build();
+	}
+
+	protected Response createSuccessResponse(final List<SystemRegistryEntry> list, final Status status) {
+		return Response.status(status).entity(new GenericEntity<>(list, SystemRegistryEntry.class)).build();
+	}
+
+	protected Response createNotFoundResponse() {
+		return Response.status(Status.NOT_FOUND).entity("The requested entity was not found in the system.").build();
+	}
+
+	protected Response createArrowheadResponse(final ArrowheadException e) {
+		return Response.status(e.getErrorCode()).entity(e.getMessage()).build();
+	}
+
+	protected Response createGenericErrorResponse(final Exception e) {
+		return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
 	}
 }

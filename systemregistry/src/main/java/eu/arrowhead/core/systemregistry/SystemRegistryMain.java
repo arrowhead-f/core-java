@@ -9,23 +9,30 @@
 
 package eu.arrowhead.core.systemregistry;
 
-import eu.arrowhead.common.ArrowheadMain;
-import eu.arrowhead.common.misc.CoreSystem;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+import eu.arrowhead.common.ArrowheadMain;
+import eu.arrowhead.common.misc.CoreSystem;
+
 public class SystemRegistryMain extends ArrowheadMain {
 	private SystemRegistryMain(String[] args) {
-		Set<Class<?>> classes = new HashSet<>(Collections.singleton(SystemRegistryResource.class));
-		String[] packages = {"eu.arrowhead.common.exception", "eu.arrowhead.common.json", "eu.arrowhead.common.filter", "eu.arrowhead.SystemRegistry.filter" };
+		Set<Class<?>> classes = new HashSet<>(Arrays.asList(SystemRegistryResource.class, SystemRegistryApi.class));
+		String[] packages = {
+				"eu.arrowhead.common.exception", 
+				"eu.arrowhead.common.json", 
+				"eu.arrowhead.common.filter", 
+				"eu.arrowhead.systemregistry", 
+				"eu.arrowhead.systemregistry.model", 
+				"eu.arrowhead.systemregistry.filter",
+				"io.swagger.jaxrs2.integration.resources"};
 		init(CoreSystem.SYSTEMREGISTRY, args, classes, packages);
-
+		
 		listenForInput();
 	}
 
 	public static void main(String[] args) {
 		new SystemRegistryMain(args);
 	}
-
 }

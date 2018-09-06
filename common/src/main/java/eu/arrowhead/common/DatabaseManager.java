@@ -163,8 +163,7 @@ public class DatabaseManager {
       object = (T) criteria.uniqueResult();
       transaction.commit();
     } catch (Exception e) {
-      e.printStackTrace();
-      log.error("get throws exception: " + e.getMessage());
+      log.error("get throws exception: " + e.getMessage(), e);
       if (transaction != null) {
         transaction.rollback();
       }
@@ -190,8 +189,7 @@ public class DatabaseManager {
       retrievedList = (List<T>) criteria.setResultTransformer(Criteria.DISTINCT_ROOT_ENTITY).list();
       transaction.commit();
     } catch (Exception e) {
-      e.printStackTrace();
-      log.error("getAll throws exception: " + e.getMessage());
+      log.error("getAll throws exception: " + e.getMessage(), e);
       if (transaction != null) {
         transaction.rollback();
       }

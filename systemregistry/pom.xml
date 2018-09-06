@@ -1,13 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-  ~  This work is part of the Productive 4.0 innovation project, which receives grants from the
-  ~  European Commissions H2020 research and innovation programme, ECSEL Joint Undertaking
-  ~  (project no. 737459), the free state of Saxony, the German Federal Ministry of Education and
-  ~  national funding authorities from involved countries.
-  -->
+<!-- ~ This work is part of the Productive 4.0 innovation project, which 
+  receives grants from the ~ European Commissions H2020 research and innovation 
+  programme, ECSEL Joint Undertaking ~ (project no. 737459), the free state 
+  of Saxony, the German Federal Ministry of Education and ~ national funding 
+  authorities from involved countries. -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
@@ -35,7 +33,11 @@
       <groupId>eu.arrowhead</groupId>
       <artifactId>common</artifactId>
     </dependency>
-
+    <dependency>
+      <groupId>io.swagger.core.v3</groupId>
+      <artifactId>swagger-jaxrs2</artifactId>
+      <version>2.0.0</version>
+    </dependency>
   </dependencies>
 
   <build>

@@ -1,33 +1,25 @@
-<?xml version = "1.0" encoding = "utf-8"?>
-<!DOCTYPE hibernate-configuration SYSTEM 
-"http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ~ Copyright (c) 2018 AITIA International Inc. ~ ~ This work is part 
+	of the Productive 4.0 innovation project, which receives grants from the 
+	~ European Commissions H2020 research and innovation programme, ECSEL Joint 
+	Undertaking ~ (project no. 737459), the free state of Saxony, the German 
+	Federal Ministry of Education and ~ national funding authorities from involved 
+	countries. -->
+
+<!DOCTYPE hibernate-configuration PUBLIC
+  "-//Hibernate/Hibernate Configuration DTD 3.0//EN"
+  "http://hibernate.sourceforge.net/hibernate-configuration-3.0.dtd">
 <hibernate-configuration>
-   <session-factory>
-   
-      <property name = "hibernate.dialect">
-         org.hibernate.dialect.MySQLDialect
-      </property>
-      
-      <property name = "hibernate.connection.driver_class">
-         com.mysql.jdbc.Driver
-      </property>
-      
-      <!-- Assume test is the database name -->
-      
-      <property name = "hibernate.connection.url">
-         jdbc:mysql://localhost/arrowhead?useSSL=false
-      </property>
-      
-      <property name = "hibernate.connection.username">
-         root
-      </property>
-      
-      <property name = "hibernate.connection.password">
-         root
-      </property>
-      
-      <!-- List of XML mapping files -->
-      <mapping resource = "systemregistry.hbm.xml"/>
-      
-   </session-factory>
+	<session-factory>
+		<property name="show_sql">true</property>
+		<property name="hibernate.hbm2ddl.auto">update</property>
+		<property name="hibernate.dialect">org.hibernate.dialect.MySQLDialect</property>
+		<property name="hibernate.connection.driver_class">com.mysql.jdbc.Driver</property>
+		<property name="hibernate.connection.url">jdbc:mysql://localhost/arrowhead?useSSL=false</property>
+		<property name="hibernate.connection.username">root</property>
+		<property name="hibernate.connection.password">root</property>
+    <mapping class="eu.arrowhead.common.database.ArrowheadSystem"/>
+    <mapping class="eu.arrowhead.common.database.ArrowheadDevice"/>
+    <mapping class="eu.arrowhead.core.systemregistry.model.SystemRegistryEntry"/>
+	</session-factory>
 </hibernate-configuration>
