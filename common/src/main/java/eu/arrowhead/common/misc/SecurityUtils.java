@@ -7,10 +7,13 @@
 
 package eu.arrowhead.common.misc;
 
+import eu.arrowhead.common.exception.ArrowheadException;
 import eu.arrowhead.common.exception.AuthException;
+import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.security.KeyFactory;
 import java.security.KeyManagementException;
@@ -29,6 +32,7 @@ import java.util.Base64;
 import java.util.Enumeration;
 import java.util.NoSuchElementException;
 import java.util.ServiceConfigurationError;
+import java.util.regex.Pattern;
 import javax.naming.InvalidNameException;
 import javax.naming.ldap.LdapName;
 import javax.naming.ldap.Rdn;
@@ -37,9 +41,9 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
-import javax.ws.rs.core.Response.Status;
 import org.apache.log4j.Logger;
 
+@SuppressWarnings("unused")
 public final class SecurityUtils {
 
   private static final Logger log = Logger.getLogger(SecurityUtils.class.getName());
@@ -248,28 +252,51 @@ public final class SecurityUtils {
     return sb.toString();
   }
 
-  public static PublicKey getPublicKey(String stringKey) {
-    byte[] byteKey;
-    try {
-      byteKey = Base64.getDecoder().decode(stringKey);
-    } catch (IllegalArgumentException | NullPointerException e) {
-      throw new AuthException("Provider public key decoding failed! Caused by: " + e.getMessage(), Status.INTERNAL_SERVER_ERROR.getStatusCode(), e);
+  /**
+   * Extract a public key either from a PEM encoded file or directly from the Base64 coded string.
+   *
+   * @param filePathOrEncodedKey either a file path for the PEM file or the Base64 encoded key
+   * @param isFilePath true if the first parameter is a file path
+   *
+   * @return the PublicKey
+   */
+  public static PublicKey getPublicKey(String filePathOrEncodedKey, boolean isFilePath) {
+    byte[] keyBytes;
+    if (isFilePath) {
+      keyBytes = loadPEM(filePathOrEncodedKey);
+    } else {
+      try {
+        keyBytes = Base64.getDecoder().decode(filePathOrEncodedKey);
+      } catch (IllegalArgumentException | NullPointerException e) {
+        throw new AuthException("Public key decoding failed! Caused by: " + e.getMessage(), e);
+      }
     }
-    X509EncodedKeySpec X509publicKey = new X509EncodedKeySpec(byteKey);
-    KeyFactory kf;
     try {
-      kf = KeyFactory.getInstance("RSA");
+      KeyFactory kf = KeyFactory.getInstance("RSA");
+      return kf.generatePublic(new X509EncodedKeySpec(keyBytes));
     } catch (NoSuchAlgorithmException e) {
       log.fatal("KeyFactory.getInstance(String) throws NoSuchAlgorithmException, code needs to be changed!");
       throw new AssertionError("KeyFactory.getInstance(String) throws NoSuchAlgorithmException, code needs to be changed!", e);
-    }
-
-    // noinspection ConstantConditions
-    try {
-      return kf.generatePublic(X509publicKey);
     } catch (InvalidKeySpecException e) {
       log.error("getPublicKey: X509 keyspec could not be created from the decoded bytes.");
       throw new AuthException("PublicKey decoding failed due wrong input key", e);
+    }
+  }
+
+  public static byte[] loadPEM(String filePath) {
+    try (FileInputStream in = new FileInputStream(filePath)) {
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      byte[] buf = new byte[1024];
+      for (int read = 0; read != -1; read = in.read(buf)) {
+        baos.write(buf, 0, read);
+      }
+      String pem = new String(baos.toByteArray(), StandardCharsets.ISO_8859_1);
+      baos.close();
+      Pattern parse = Pattern.compile("(?m)(?s)^---*BEGIN.*---*$(.*)^---*END.*---*$.*");
+      String encoded = parse.matcher(pem).replaceFirst("$1");
+      return Base64.getMimeDecoder().decode(encoded);
+    } catch (IOException e) {
+      throw new ArrowheadException("IOException occurred during PEM file loading from " + filePath, e);
     }
   }
 

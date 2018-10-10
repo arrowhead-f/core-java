@@ -43,6 +43,8 @@ import javax.ws.rs.ProcessingException;
 import javax.ws.rs.core.UriBuilder;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
+import org.glassfish.grizzly.http.server.CLStaticHttpHandler;
+import org.glassfish.grizzly.http.server.HttpHandler;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.grizzly.ssl.SSLContextConfigurator;
 import org.glassfish.grizzly.ssl.SSLEngineConfigurator;
@@ -174,7 +176,7 @@ public class GatekeeperMain implements NeedsCoreSystemService {
     URI uri = UriBuilder.fromUri(url).build();
     try {
       final HttpServer server = GrizzlyHttpServerFactory.createHttpServer(uri, config, false);
-      server.getServerConfiguration().setAllowPayloadForUndefinedHttpMethods(true);
+      configureServer(server);
       server.start();
       if (inbound) {
         log.info("Started inbound server at: " + url);
@@ -247,7 +249,7 @@ public class GatekeeperMain implements NeedsCoreSystemService {
     try {
       final HttpServer server = GrizzlyHttpServerFactory
           .createHttpServer(uri, config, true, new SSLEngineConfigurator(serverContext).setClientMode(false).setNeedClientAuth(true), false);
-      server.getServerConfiguration().setAllowPayloadForUndefinedHttpMethods(true);
+      configureServer(server);
       server.start();
       if (inbound) {
         log.info("Started inbound server at: " + url);
@@ -261,6 +263,14 @@ public class GatekeeperMain implements NeedsCoreSystemService {
       throw new ServiceConfigurationError("Make sure you gave a valid address in the config file! (Assignable to this JVM and not in use already)",
                                           e);
     }
+  }
+
+  private static void configureServer(HttpServer server) {
+    //Add swagger UI to the server
+    final HttpHandler httpHandler = new CLStaticHttpHandler(HttpServer.class.getClassLoader(), "/swagger/");
+    server.getServerConfiguration().addHttpHandler(httpHandler, "/api");
+    //Allow message payload for GET and DELETE requests - ONLY to provide custom error message for them
+    server.getServerConfiguration().setAllowPayloadForUndefinedHttpMethods(true);
   }
 
   private static void useSRService(boolean registering) {
@@ -366,5 +376,4 @@ public class GatekeeperMain implements NeedsCoreSystemService {
     System.out.println("Gatekeeper Server stopped");
     System.exit(0);
   }
-
 }

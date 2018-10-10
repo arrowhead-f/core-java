@@ -17,6 +17,7 @@ import eu.arrowhead.common.exception.DataNotFoundException;
 import eu.arrowhead.common.messages.InterCloudAuthEntry;
 import eu.arrowhead.common.messages.IntraCloudAuthEntry;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -49,6 +50,12 @@ public class AuthorizationApi {
   @Produces(MediaType.TEXT_PLAIN)
   public String getIt() {
     return "authorization/mgmt got it";
+  }
+
+  @GET
+  @Path("publickey")
+  public String getMyPublicKey() {
+    return Base64.getEncoder().encodeToString(AuthorizationMain.publicKey.getEncoded());
   }
 
   @GET

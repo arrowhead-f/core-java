@@ -7,14 +7,10 @@
 
 package eu.arrowhead.core.serviceregistry;
 
-import com.github.danieln.dnssdjava.DnsSDRegistrator;
 import eu.arrowhead.common.ArrowheadMain;
 import eu.arrowhead.common.Utility;
 import eu.arrowhead.common.misc.CoreSystem;
 import eu.arrowhead.common.misc.TypeSafeProperties;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -47,10 +43,9 @@ public class ServiceRegistryMain extends ArrowheadMain {
   }
 
   private ServiceRegistryMain(String[] args) {
-    Set<Class<?>> classes = new HashSet<>(Collections.singleton(ServiceRegistryResource.class));
     String[] packages = {"eu.arrowhead.common.exception", "eu.arrowhead.common.json", "eu.arrowhead.common.filter",
-        "eu.arrowhead.core.serviceregistry.filter"};
-    init(CoreSystem.SERVICE_REGISTRY_DNS, args, classes, packages);
+        "eu.arrowhead.core.serviceregistry"};
+    init(CoreSystem.SERVICE_REGISTRY_DNS, args, null, packages);
 
     System.setProperty("dns.server", DNS_ADDRESS);
     System.setProperty("dnssd.domain", DNS_DOMAIN);

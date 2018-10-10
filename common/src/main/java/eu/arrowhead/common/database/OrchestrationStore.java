@@ -42,8 +42,6 @@ import org.hibernate.annotations.Type;
  * JPA entity class for storing <tt>OrchestrationStore</tt> information in the database. The <i>arrowhead_service_id</i>, <i>consumer_system_id</i>,
  * <i>priority</i> and <i>is_default</i> columns must be unique together. The <i>priority</i> integer can not be negative. <p> The class implements
  * the <tt>Comparable</tt> interface based on the priority field (but does not override the equals() method).
- *
- * @author Umlauf Zoltán
  */
 @Entity
 @Table(name = "orchestration_store", uniqueConstraints = {
@@ -83,7 +81,7 @@ public class OrchestrationStore implements Comparable<OrchestrationStore> {
   private ArrowheadCloud providerCloud;
 
   @Min(1)
-  private Integer priority;
+  private Integer priority = 0;
 
   @Column(name = "is_default")
   @Type(type = "yes_no")

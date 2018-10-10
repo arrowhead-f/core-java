@@ -101,7 +101,7 @@ public class GatewayService {
     byte[] encryptedIVAndMessage;
 
     try {
-      publicKey = SecurityUtils.getPublicKey(publicKeyString);
+      publicKey = SecurityUtils.getPublicKey(publicKeyString, false);
       cipherRSA = Cipher.getInstance("RSA/ECB/PKCS1Padding");
       cipherRSA.init(Cipher.ENCRYPT_MODE, publicKey);
     } catch (GeneralSecurityException e) {

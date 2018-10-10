@@ -156,7 +156,7 @@ class TokenGenerationService {
 
     for (ArrowheadSystem provider : providers) {
       try {
-        PublicKey key = SecurityUtils.getPublicKey(provider.getAuthenticationInfo());
+        PublicKey key = SecurityUtils.getPublicKey(provider.getAuthenticationInfo(), false);
         keys.add(key);
       } catch (AuthException e) {
         log.error("The stored auth info for the ArrowheadSystem (" + provider.getSystemName()

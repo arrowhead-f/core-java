@@ -12,10 +12,8 @@ import eu.arrowhead.common.misc.CoreSystem;
 import eu.arrowhead.common.misc.CoreSystemService;
 import eu.arrowhead.common.misc.GetCoreSystemServicesTask;
 import eu.arrowhead.common.misc.NeedsCoreSystemService;
-import eu.arrowhead.core.orchestrator.support.OldOrchResource;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -36,9 +34,8 @@ public class OrchestratorMain extends ArrowheadMain implements NeedsCoreSystemSe
   static String ICN_SERVICE_URI;
 
   private OrchestratorMain(String[] args) {
-    Set<Class<?>> classes = new HashSet<>(Arrays.asList(OrchestratorResource.class, OldOrchResource.class));
-    String[] packages = {"eu.arrowhead.common", "eu.arrowhead.core.orchestrator.api", "eu.arrowhead.core.orchestrator.filter"};
-    init(CoreSystem.ORCHESTRATOR, args, classes, packages);
+    String[] packages = {"eu.arrowhead.common", "eu.arrowhead.core.orchestrator"};
+    init(CoreSystem.ORCHESTRATOR, args, null, packages);
     listenForInput();
   }
 

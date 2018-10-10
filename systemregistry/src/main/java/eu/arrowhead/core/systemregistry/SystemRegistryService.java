@@ -7,24 +7,22 @@
 
 package eu.arrowhead.core.systemregistry;
 
-import java.util.Optional;
-
-import javax.persistence.EntityNotFoundException;
-import javax.ws.rs.core.Response.Status;
-
 import eu.arrowhead.common.DatabaseManager;
 import eu.arrowhead.common.RegistryService;
 import eu.arrowhead.common.database.ArrowheadDevice;
 import eu.arrowhead.common.database.ArrowheadSystem;
+import eu.arrowhead.common.database.SystemRegistryEntry;
 import eu.arrowhead.common.exception.ArrowheadException;
 import eu.arrowhead.common.exception.DataNotFoundException;
-import eu.arrowhead.core.systemregistry.model.SystemRegistryEntry;
+import java.util.Optional;
+import javax.persistence.EntityNotFoundException;
+import javax.ws.rs.core.Response.Status;
 
 public class SystemRegistryService implements RegistryService<SystemRegistryEntry> {
 
 	private final DatabaseManager databaseManager;
 
-	public SystemRegistryService() throws ExceptionInInitializerError {
+  public SystemRegistryService() {
 		databaseManager = DatabaseManager.getInstance();
 	}
 

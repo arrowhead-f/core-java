@@ -150,7 +150,6 @@ final class OrchestratorService {
    *
    * @throws DataNotFoundException if all the queried Orchestration Store entry options were exhausted and none were found operational
    */
-
   static OrchestrationResponse orchestrationFromStore(ServiceRequestForm srf) {
     // Querying the Orchestration Store for matching entries
     List<OrchestrationStore> entryList = OrchestratorDriver.queryOrchestrationStore(srf.getRequesterSystem(), srf.getRequestedService());

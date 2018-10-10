@@ -24,7 +24,9 @@ import javax.validation.ReportAsSingleViolation;
 import javax.validation.constraints.NotNull;
 
 /*
-  This is very similar in behaviour to the org.hibernate.validator.constraints.NotBlank, but I added a TYPE_USE to the Target constraint, so tis
+  SENotBlank: String element of a collection is not null, and is does contain at least 1 non-whitespace character
+
+  This is very similar in behaviour to the org.hibernate.validator.constraints.NotBlank, but I added a TYPE_USE to the Target constraint, so this
   constraint can be used in Collection elements, for example List<@SENotBlank String> someList;
  */
 @Documented

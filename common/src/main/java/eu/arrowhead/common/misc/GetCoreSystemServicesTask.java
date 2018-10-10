@@ -9,7 +9,6 @@ package eu.arrowhead.common.misc;
 
 import eu.arrowhead.common.Utility;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,7 +19,7 @@ import java.util.TimerTask;
 public class GetCoreSystemServicesTask extends TimerTask {
 
   private Object context;
-  private List<String> serviceDefs = new ArrayList<>();
+  private List<String> serviceDefs;
   private Map<String, String[]> uriMap = new HashMap<>();
 
   public GetCoreSystemServicesTask(Object context, List<String> serviceDefs) {

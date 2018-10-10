@@ -7,159 +7,83 @@
 
 package eu.arrowhead.core.deviceregistry;
 
-import eu.arrowhead.common.DatabaseManager;
-import eu.arrowhead.core.deviceregistry.model.AHDevice;
-import eu.arrowhead.core.deviceregistry.model.DeviceIdentity;
-import eu.arrowhead.core.deviceregistry.model.DeviceInformation;
-import eu.arrowhead.core.deviceregistry.model.DeviceRegistry;
-import eu.arrowhead.core.deviceregistry.model.HttpEndpoint;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import javax.ws.rs.core.Response;
+import java.util.Optional;
+
+import javax.persistence.EntityNotFoundException;
 import javax.ws.rs.core.Response.Status;
-import org.apache.log4j.Logger;
-import org.hibernate.Criteria;
-import org.hibernate.HibernateException;
-import org.hibernate.Session;
-import org.hibernate.SessionFactory;
-import org.hibernate.Transaction;
-import org.hibernate.cfg.Configuration;
-import org.hibernate.criterion.Restrictions;
 
-public class DeviceRegistryService {
-	private static final Logger log = Logger.getLogger(DeviceRegistryService.class.getName());
-	private static final DatabaseManager dm = DatabaseManager.getInstance();
-	private static final HashMap<String, Object> restrictionMap = new HashMap<>();
-	private static SessionFactory factory;
+import eu.arrowhead.common.DatabaseManager;
+import eu.arrowhead.common.RegistryService;
+import eu.arrowhead.common.database.ArrowheadDevice;
+import eu.arrowhead.common.exception.ArrowheadException;
+import eu.arrowhead.common.exception.DataNotFoundException;
+import eu.arrowhead.core.deviceregistry.model.DeviceRegistryEntry;
 
-	public DeviceRegistryService() throws Exception {
-		try {
-			factory = new Configuration().configure().buildSessionFactory();
-		} catch (Throwable ex) {
-			System.err.println("Failed to create sessionFactory object." + ex);
-			throw new ExceptionInInitializerError(ex);
-		}
+public class DeviceRegistryService  implements RegistryService<DeviceRegistryEntry> {
+	
+	private final DatabaseManager databaseManager;
+
+	public DeviceRegistryService() throws ExceptionInInitializerError {
+		databaseManager = DatabaseManager.getInstance();
 	}
 
-	@SuppressWarnings({ "deprecation", "unchecked", "rawtypes" })
-	public List<AHDevice> Lookup(String id) throws Exception {
-		Session session = factory.openSession();
-		Transaction tx = null;
-		List<AHDevice> ret_devices = new ArrayList<AHDevice>();
+	public DeviceRegistryEntry lookup(final long id) throws EntityNotFoundException, ArrowheadException {
+		final DeviceRegistryEntry returnValue;
 
 		try {
-			tx = session.beginTransaction();
-			Criteria cr = session.createCriteria(DeviceRegistry.class);
-
-			if (id != null) {
-				cr.add(Restrictions.like("id", "%" + id + "%"));
-			}
-
-			List<DeviceRegistry> devices = cr.list();
-
-			for (Iterator iterator = devices.iterator(); iterator.hasNext();) {
-				DeviceRegistry ahDevice = (DeviceRegistry) iterator.next();
-				DeviceInformation information = new DeviceInformation(
-						new DeviceIdentity(ahDevice.getId(), ahDevice.getMac()), new HttpEndpoint(ahDevice.getHost(), ahDevice.getPort(), ahDevice.getPath(),
-																																											ahDevice.getSecure()),
-						null, null);
-
-				ret_devices.add(new AHDevice(information));
-			}
-
-			tx.commit();
-		} catch (HibernateException e) {
-			if (tx != null) {
-				tx.rollback();
-			}
-
-			e.printStackTrace();
-		} finally {
-			session.close();
+			Optional<DeviceRegistryEntry> optional = databaseManager.get(DeviceRegistryEntry.class, id);
+			returnValue = optional.orElseThrow(() -> {
+				return new DataNotFoundException("The requested entity does not exist", Status.NOT_FOUND.getStatusCode());
+			});
+		} catch (final ArrowheadException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new ArrowheadException(e.getMessage(), Status.NOT_FOUND.getStatusCode(), e);
 		}
 
-		return ret_devices;
+		return returnValue;
+	}
+	
+
+	public DeviceRegistryEntry publish(final DeviceRegistryEntry entity) throws ArrowheadException {
+		final DeviceRegistryEntry returnValue;
+
+		try {
+			entity.setProvidedDevice(resolve(entity.getProvidedDevice()));
+			returnValue = databaseManager.save(entity);
+		} catch (final ArrowheadException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new ArrowheadException(e.getMessage(), Status.NOT_FOUND.getStatusCode(), e);
+		}
+
+		return returnValue;
 	}
 
-	public Status Publish(String id) throws Exception {
-		List<AHDevice> devices = Lookup(id);
-		Status retStatus = null;
-		Session session = null;
-		Transaction tx = null;
+	public DeviceRegistryEntry unpublish(final DeviceRegistryEntry entity) throws EntityNotFoundException, ArrowheadException {
+		final DeviceRegistryEntry returnValue;
 
-		if (!devices.isEmpty()) {
-			// ID already exists
-			retStatus = Response.Status.CONFLICT;
-		} else {
-			// create new system
-			session = factory.openSession();
-
-			try {
-				tx = session.beginTransaction();
-
-				DeviceRegistry newDevice = new DeviceRegistry("00:11:22:33:44:55", "test-host", 7000, "test-path",
-						false, "");
-				newDevice.setId(id);
-
-				session.save(newDevice);
-				tx.commit();
-
-				retStatus = Response.Status.CREATED;
-			} catch (HibernateException e) {
-				if (tx != null) {
-					tx.rollback();
-				}
-
-				e.printStackTrace();
-			} finally {
-				session.close();
-			}
+		try {
+			databaseManager.delete(entity);
+			returnValue = entity;
+		} catch (final ArrowheadException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new ArrowheadException(e.getMessage(), Status.NOT_FOUND.getStatusCode(), e);
 		}
-
-		return retStatus;
+		return returnValue;
 	}
 
-	public Status Unpublish(String id) throws Exception {
-		List<AHDevice> devices = Lookup(id);
-		Status retStatus = null;
-		Session session = null;
-		Transaction tx = null;
+	protected ArrowheadDevice resolve(final ArrowheadDevice provider) {
+		final ArrowheadDevice returnValue;
 
-		if (!devices.isEmpty()) {
-			// delete the found device
-			session = factory.openSession();
-
-			try {
-				// create transaction
-				tx = session.beginTransaction();
-
-				// find device
-				DeviceRegistry dev = (DeviceRegistry) session.get(DeviceRegistry.class, id);
-
-				// delete device
-				session.delete(dev);
-
-				// commit work
-				tx.commit();
-
-				// create response
-				retStatus = Response.Status.OK;
-			} catch (HibernateException e) {
-				if (tx != null) {
-					tx.rollback();
-				}
-
-				e.printStackTrace();
-			} finally {
-				session.close();
-			}
+		if (provider.getId() != null) {
+			Optional<ArrowheadDevice> optional = databaseManager.get(ArrowheadDevice.class, provider.getId());
+			returnValue = optional.orElseThrow(() -> new ArrowheadException("ArrowheadDevice does not exist", Status.BAD_REQUEST.getStatusCode()));
 		} else {
-			// ID does not exist
-			retStatus = Response.Status.NOT_FOUND;
+			returnValue = databaseManager.save(provider);
 		}
 
-		return retStatus;
+		return returnValue;
 	}
 }

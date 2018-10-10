@@ -36,6 +36,8 @@ import javax.ws.rs.ProcessingException;
 import javax.ws.rs.core.UriBuilder;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
+import org.glassfish.grizzly.http.server.CLStaticHttpHandler;
+import org.glassfish.grizzly.http.server.HttpHandler;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.grizzly.ssl.SSLContextConfigurator;
 import org.glassfish.grizzly.ssl.SSLEngineConfigurator;
@@ -67,10 +69,12 @@ public abstract class ArrowheadMain {
 
   protected void init(CoreSystem coreSystem, String[] args, Set<Class<?>> classes, String[] packages) {
     System.out.println("Working directory: " + System.getProperty("user.dir"));
+    packages = addSwaggerToPackages(packages);
     this.coreSystem = coreSystem;
     DatabaseManager.init();
 
     boolean isSecure = false;
+    //Read in command line arguments
     for (String arg : args) {
       switch (arg) {
         case "-daemon":
@@ -88,11 +92,13 @@ public abstract class ArrowheadMain {
       }
     }
 
+    //Get the URL where the web-server will bind to
     String address = props.getProperty("address", "0.0.0.0");
     int port = isSecure ? props.getIntProperty("secure_port", coreSystem.getSecurePort())
                         : props.getIntProperty("insecure_port", coreSystem.getInsecurePort());
     baseUri = Utility.getUri(address, port, null, isSecure, true);
 
+    //Start the web-server
     if (isSecure) {
       List<String> allMandatoryProperties = new ArrayList<>(coreSystem.getAlwaysMandatoryFields());
       allMandatoryProperties.addAll(coreSystem.getSecureMandatoryFields());
@@ -103,6 +109,7 @@ public abstract class ArrowheadMain {
       startServer(classes, packages);
     }
 
+    //Register the core system services to the Service Registry
     if (!coreSystem.equals(CoreSystem.SERVICE_REGISTRY_DNS) && !coreSystem.equals(CoreSystem.SERVICE_REGISTRY_SQL)) {
       String srAddress = props.getProperty("sr_address", "0.0.0.0");
       int srPort = isSecure ? props.getIntProperty("sr_secure_port", CoreSystem.SERVICE_REGISTRY_SQL.getSecurePort())
@@ -141,14 +148,11 @@ public abstract class ArrowheadMain {
     final ResourceConfig config = new ResourceConfig();
     config.registerClasses(classes);
     config.packages(packages);
-    adaptConfig(config);
-    config.packages("io.swagger.v3.jaxrs2.integration.resources");
 
     URI uri = UriBuilder.fromUri(baseUri).build();
     try {
       server = GrizzlyHttpServerFactory.createHttpServer(uri, config, false);
-      adaptServer(server);
-      server.getServerConfiguration().setAllowPayloadForUndefinedHttpMethods(true);
+      configureServer(server);
       server.start();
       log.info("Started server at: " + baseUri);
       System.out.println("Started insecure server at: " + baseUri);
@@ -158,20 +162,10 @@ public abstract class ArrowheadMain {
     }
   }
 
-  protected void adaptServer(HttpServer server) {
-		// NOOP
-	}
-
-	protected void adaptConfig(ResourceConfig config) {
-		// NOOP
-	}
-
-	protected void startSecureServer(Set<Class<?>> classes, String[] packages) {
+  protected void startSecureServer(Set<Class<?>> classes, String[] packages) {
     final ResourceConfig config = new ResourceConfig();
     config.registerClasses(classes);
     config.packages(packages);
-    adaptConfig(config);
-    config.packages("io.swagger.v3.jaxrs2.integration.resources");
 
     String keystorePath = props.getProperty("keystore");
     String keystorePass = props.getProperty("keystorepass");
@@ -211,8 +205,7 @@ public abstract class ArrowheadMain {
     try {
       server = GrizzlyHttpServerFactory
           .createHttpServer(uri, config, true, new SSLEngineConfigurator(sslCon).setClientMode(false).setNeedClientAuth(true), false);
-      adaptServer(server);
-      server.getServerConfiguration().setAllowPayloadForUndefinedHttpMethods(true);
+      configureServer(server);
       server.start();
       log.info("Started server at: " + baseUri);
       System.out.println("Started secure server at: " + baseUri);
@@ -220,6 +213,14 @@ public abstract class ArrowheadMain {
       throw new ServiceConfigurationError("Make sure you gave a valid address in the config file! (Assignable to this JVM and not in use already)",
                                           e);
     }
+  }
+
+  private void configureServer(HttpServer server) {
+    //Add swagger UI to the server
+    final HttpHandler httpHandler = new CLStaticHttpHandler(HttpServer.class.getClassLoader(), "/swagger/");
+    server.getServerConfiguration().addHttpHandler(httpHandler, "/api");
+    //Allow message payload for GET and DELETE requests - ONLY to provide custom error message for them
+    server.getServerConfiguration().setAllowPayloadForUndefinedHttpMethods(true);
   }
 
   private void shutdown() {
@@ -277,5 +278,11 @@ public abstract class ArrowheadMain {
         Utility.sendRequest(UriBuilder.fromUri(srBaseUri).path("remove").build().toString(), "PUT", srEntry);
       }
     }
+  }
+
+  private String[] addSwaggerToPackages(String[] packages) {
+    packages = Arrays.copyOf(packages, packages.length + 1);
+    packages[packages.length - 1] = "io.swagger.v3.jaxrs2.integration.resources";
+    return packages;
   }
 }

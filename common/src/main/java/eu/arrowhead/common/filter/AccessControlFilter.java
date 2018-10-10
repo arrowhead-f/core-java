@@ -29,8 +29,8 @@ public abstract class AccessControlFilter implements ContainerRequestFilter {
   @Override
   public void filter(ContainerRequestContext requestContext) {
     SecurityContext sc = requestContext.getSecurityContext();
-    String requestTarget = Utility.stripEndSlash(requestContext.getUriInfo().getRequestUri().toString());
     if (sc.isSecure()) {
+      String requestTarget = Utility.stripEndSlash(requestContext.getUriInfo().getRequestUri().toString());
       String requestJson = Utility.getRequestPayload(requestContext.getEntityStream());
       String commonName = SecurityUtils.getCertCNFromSubject(sc.getUserPrincipal().getName());
       if (!isClientAuthorized(commonName, requestContext.getMethod(), requestTarget, requestJson)) {

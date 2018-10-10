@@ -1,3 +1,11 @@
+### October 1st, 2018
+* Input validation properly works now, used the incorrect dependencies before
+* Exception handling improved
+* Fixed some NullPointerException sources
+* Removed `broker_name` and `authentication_info` columns from `broker` database table, unique constraint also deleted
+* Added [Swagger UI](https://swagger.io/tools/swagger-ui/) to each core system, to help the discoverability of the API
+* Merged the `feature/dev_sys_reg` branch into the `develop` branch, which contains the updated System Registry core system
+
 ### September 24th, 2018
 * `README.md` now has a detailed guide on how to setup an arrowhead cloud from source
 * The Gatekeeper AccessControlFilter had a critical bug fixed

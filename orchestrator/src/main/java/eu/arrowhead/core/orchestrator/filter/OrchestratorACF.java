@@ -45,7 +45,8 @@ public class OrchestratorACF extends AccessControlFilter {
         return clientFields[0].equalsIgnoreCase("gatekeeper") && serverFields[1].equalsIgnoreCase(clientFields[1]);
       } else {
         // Otherwise all request from the local cloud are allowed
-        if (!srf.getRequesterSystem().getSystemName().equalsIgnoreCase(clientFields[0])) {
+        String consumerName = srf.getRequesterSystem().getSystemName().replaceAll("_", "");
+        if (!consumerName.equalsIgnoreCase(clientFields[0])) {
           // BUT the requester system has to be the same as the first part of the common name
           log.error("Requester system name and cert common name do not match!");
           throw new AuthException(

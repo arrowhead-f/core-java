@@ -12,8 +12,6 @@ import eu.arrowhead.common.misc.CoreSystem;
 import eu.arrowhead.common.misc.SecurityUtils;
 import java.security.KeyStore;
 import java.security.PrivateKey;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 import javax.net.ssl.SSLContext;
 
@@ -26,10 +24,8 @@ public class GatewayMain extends ArrowheadMain {
   public static SSLContext serverContext;
 
   private GatewayMain(String[] args) {
-    Set<Class<?>> classes = new HashSet<>(Collections.singleton(GatewayResource.class));
-    String[] packages = {"eu.arrowhead.common.exception", "eu.arrowhead.common.json", "eu.arrowhead.common.filter",
-        "eu.arrowhead.core.gateway.filter"};
-    init(CoreSystem.GATEWAY, args, classes, packages);
+    String[] packages = {"eu.arrowhead.common.exception", "eu.arrowhead.common.json", "eu.arrowhead.common.filter", "eu.arrowhead.core.gateway"};
+    init(CoreSystem.GATEWAY, args, null, packages);
 
     minPort = props.getIntProperty("min_port", 8000);
     maxPort = props.getIntProperty("max_port", 8100);

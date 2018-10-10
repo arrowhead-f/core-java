@@ -33,7 +33,6 @@ import javax.persistence.UniqueConstraint;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 import org.hibernate.annotations.Type;
@@ -83,9 +82,8 @@ public class EventFilter {
 
   //TODO provide a REST interface to easily switch this
   @Column(name = "match_metadata")
-  @ColumnDefault("false")
   @Type(type = "yes_no")
-  private Boolean matchMetadata;
+  private Boolean matchMetadata = false;
 
   public EventFilter() {
   }

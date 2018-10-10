@@ -7,14 +7,13 @@
   -->
 
 <!DOCTYPE hibernate-configuration SYSTEM
-"http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
+  "http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
 <hibernate-configuration>
-	<session-factory>
-		<property name="show_sql">true</property>
-		<property name="hibernate.hbm2ddl.auto">update</property>
-		<mapping class="eu.arrowhead.common.database.ArrowheadSystem" />
-		<mapping class="eu.arrowhead.common.database.ArrowheadDevice" />
-		<mapping
-			class="eu.arrowhead.core.systemregistry.model.SystemRegistryEntry" />
-	</session-factory>
+  <session-factory>
+    <property name="show_sql">true</property>
+    <property name="hibernate.hbm2ddl.auto">update</property>
+    <mapping class="eu.arrowhead.common.database.ArrowheadSystem"/>
+    <mapping class="eu.arrowhead.common.database.ArrowheadDevice"/>
+    <mapping class="eu.arrowhead.common.database.SystemRegistryEntry"/>
+  </session-factory>
 </hibernate-configuration>

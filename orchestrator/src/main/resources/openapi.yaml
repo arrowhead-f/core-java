@@ -1,0 +1,7 @@
+prettyPrint: true
+openAPI:
+  info:
+    title: Arrowhead Orchestrator Core System API
+    description: 'This page shows the REST interfaces offered by the Orchestrator Core System.'
+    contact:
+      url: https://github.com/arrowhead-f

@@ -1,0 +1,7 @@
+prettyPrint: true
+openAPI:
+  info:
+    title: Arrowhead Gateway Core System API
+    description: 'This page shows the REST interfaces offered by the Gateway Core System.'
+    contact:
+      url: https://github.com/arrowhead-f

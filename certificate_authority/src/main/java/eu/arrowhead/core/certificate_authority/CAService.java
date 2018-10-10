@@ -61,12 +61,10 @@ final class CAService {
       throw new BadPayloadException("Failed to parse request as a JcaPKCS10CertificationRequest (" + e.getMessage() + ")", e);
     }
 
-    //Compare common names, reject requests with invalid common name
-    X509Certificate cloudCert = SecurityUtils.getFirstCertFromKeyStore(CAMain.cloudKeystore);
+    //Compare client/cloud common names, reject requests with invalid common name
     final String clientCN = SecurityUtils.getCertCNFromSubject(csr.getSubject().toString());
-    final String cloudCN = SecurityUtils.getCertCNFromSubject(cloudCert.getSubjectX500Principal().getName());
-    if (!SecurityUtils.isKeyStoreCNArrowheadValid(clientCN, cloudCN)) {
-      throw new BadPayloadException("Certificate request does not have a valid common name! Valid common name: {systemName}." + cloudCN);
+    if (!SecurityUtils.isKeyStoreCNArrowheadValid(clientCN, CAMain.cloudCN)) {
+      throw new BadPayloadException("Certificate request does not have a valid common name! Valid common name: {systemName}." + CAMain.cloudCN);
     }
 
     //Verify the signature on the certificate request
@@ -91,7 +89,7 @@ final class CAService {
       //This should not be possible after a successful signature verification
       throw new ServiceConfigurationError("Extracting the public key from the CSR failed (" + e.getMessage() + ")", e);
     }
-    X509v3CertificateBuilder v3CertBldr = new JcaX509v3CertificateBuilder(cloudCert, // issuer
+    X509v3CertificateBuilder v3CertBldr = new JcaX509v3CertificateBuilder(CAMain.cloudCert, // issuer
                                                                           BigInteger.valueOf(System.currentTimeMillis()) // serial number
                                                                                     .multiply(BigInteger.valueOf(10)), validFrom, // start time
                                                                           validUntil, // expiry time
@@ -105,7 +103,7 @@ final class CAService {
     try {
       JcaX509ExtensionUtils extUtils = new JcaX509ExtensionUtils();
       v3CertBldr.addExtension(Extension.subjectKeyIdentifier, false, extUtils.createSubjectKeyIdentifier(clientKey));
-      v3CertBldr.addExtension(Extension.authorityKeyIdentifier, false, extUtils.createAuthorityKeyIdentifier(cloudCert));
+      v3CertBldr.addExtension(Extension.authorityKeyIdentifier, false, extUtils.createAuthorityKeyIdentifier(CAMain.cloudCert));
       v3CertBldr.addExtension(Extension.basicConstraints, true, new BasicConstraints(false));
     } catch (NoSuchAlgorithmException | CertIOException | CertificateEncodingException e) {
       throw new AuthException("Appending extensions to the certificate failed! (" + e.getMessage() + ")", e);
@@ -132,9 +130,8 @@ final class CAService {
       String pemRootCert = encoder.encodeToString(chain[1].getEncoded());
       return new CertificateSigningResponse(encodedSignedCert, pemIntermediateCert, pemRootCert);
     } catch (KeyStoreException | CertificateEncodingException e) {
-      e.printStackTrace();
+      throw new AuthException("Getting the cloud certificate chain failed! (" + e.getMessage() + ")", e);
     }
-    return new CertificateSigningResponse(encodedSignedCert);
   }
 
 }

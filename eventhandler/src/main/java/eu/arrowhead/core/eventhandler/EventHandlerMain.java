@@ -10,7 +10,7 @@ package eu.arrowhead.core.eventhandler;
 import eu.arrowhead.common.ArrowheadMain;
 import eu.arrowhead.common.misc.CoreSystem;
 import eu.arrowhead.common.web.ArrowheadSystemApi;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Timer;
@@ -25,10 +25,9 @@ public class EventHandlerMain extends ArrowheadMain {
   }
 
   private EventHandlerMain(String[] args) {
-    Set<Class<?>> classes = new HashSet<>(Arrays.asList(EventHandlerResource.class, ArrowheadSystemApi.class));
-    String[] packages = {"eu.arrowhead.common.exception", "eu.arrowhead.common.json", "eu.arrowhead.common.filter",
-        "eu.arrowhead.core.eventhandler.filter"};
-    init(CoreSystem.EVENTHANDLER, args, classes, packages);
+    Set<Class<?>> classes = new HashSet<>(Collections.singleton(ArrowheadSystemApi.class));
+    String[] packages = {"eu.arrowhead.common.exception", "eu.arrowhead.common.json", "eu.arrowhead.common.filter", "eu.arrowhead.core.eventhandler"};
+    init(CoreSystem.EVENT_HANDLER, args, classes, packages);
 
     //if removing old filters (based on endDate field) is requested, start the TimerTask that provides it
     if (props.getBooleanProperty("remove_old_filters", false)) {

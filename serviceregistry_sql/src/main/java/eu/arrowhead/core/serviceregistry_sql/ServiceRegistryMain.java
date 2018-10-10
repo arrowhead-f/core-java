@@ -11,7 +11,6 @@ import eu.arrowhead.common.ArrowheadMain;
 import eu.arrowhead.common.misc.CoreSystem;
 import eu.arrowhead.common.web.ArrowheadServiceApi;
 import eu.arrowhead.common.web.ArrowheadSystemApi;
-import eu.arrowhead.core.serviceregistry_sql.support.OldServiceRegResource;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -29,10 +28,9 @@ public class ServiceRegistryMain extends ArrowheadMain {
   }
 
   private ServiceRegistryMain(String[] args) {
-    Set<Class<?>> classes = new HashSet<>(Arrays.asList(ServiceRegistryResource.class, ServiceRegistryApi.class, OldServiceRegResource.class,
-                                                        ArrowheadSystemApi.class, ArrowheadServiceApi.class));
+    Set<Class<?>> classes = new HashSet<>(Arrays.asList(ArrowheadSystemApi.class, ArrowheadServiceApi.class));
     String[] packages = {"eu.arrowhead.common.exception", "eu.arrowhead.common.json", "eu.arrowhead.common.filter",
-        "eu.arrowhead.core.serviceregistry_sql.filter"};
+        "eu.arrowhead.core.serviceregistry_sql"};
     init(CoreSystem.SERVICE_REGISTRY_SQL, args, classes, packages);
 
     //if provider ping is scheduled, start the TimerTask that provides it

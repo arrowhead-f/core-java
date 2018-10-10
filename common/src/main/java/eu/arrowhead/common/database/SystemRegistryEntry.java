@@ -1,8 +1,15 @@
-package eu.arrowhead.core.systemregistry.model;
+/*
+ * This work is part of the Productive 4.0 innovation project, which receives grants from the
+ * European Commissions H2020 research and innovation programme, ECSEL Joint Undertaking
+ * (project no. 737459), the free state of Saxony, the German Federal Ministry of Education and
+ * national funding authorities from involved countries.
+ */
 
+package eu.arrowhead.common.database;
+
+import eu.arrowhead.common.json.constraint.LDTInFuture;
 import java.time.LocalDateTime;
 import java.util.Objects;
-
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -15,15 +22,10 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import javax.validation.Valid;
-import javax.validation.constraints.FutureOrPresent;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
-
-import eu.arrowhead.common.database.ArrowheadDevice;
-import eu.arrowhead.common.database.ArrowheadSystem;
 
 @Entity
 @Table(name = "system_registry", uniqueConstraints = {
@@ -53,19 +55,17 @@ public class SystemRegistryEntry {
 	private String serviceUri;
 
 	@Column(name = "end_of_validity")
-	@FutureOrPresent(message = "End of validity date cannot be in the past")
+  @LDTInFuture(message = "End of validity date cannot be in the past")
 	private LocalDateTime endOfValidity;
 
 	public SystemRegistryEntry() {
-		super();
 	}
 
 	public SystemRegistryEntry(Long id,
-			@Valid @NotNull(message = "Provided ArrowheadSystem cannot be null") ArrowheadSystem providedSystem,
-			@Valid @NotNull(message = "Provider ArrowheadDevice cannot be null") ArrowheadDevice provider,
-			@Size(max = 255, message = "Service URI must be 255 character at max") String serviceUri,
-			@FutureOrPresent(message = "End of validity date cannot be in the past") LocalDateTime endOfValidity) {
-		super();
+                             @Valid @NotNull(message = "Provided ArrowheadSystem cannot be null") ArrowheadSystem providedSystem,
+                             @Valid @NotNull(message = "Provider ArrowheadDevice cannot be null") ArrowheadDevice provider,
+                             @Size(max = 255, message = "Service URI must be 255 character at max") String serviceUri,
+                             @LDTInFuture(message = "End of validity date cannot be in the past") LocalDateTime endOfValidity) {
 		this.id = id;
 		this.providedSystem = providedSystem;
 		this.provider = provider;

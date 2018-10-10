@@ -18,6 +18,7 @@ import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import org.hibernate.annotations.Type;
@@ -49,6 +50,7 @@ public class ArrowheadCloud {
   @Size(min = 3, max = 255, message = "Cloud address must be between 3 and 255 characters")
   private String address;
 
+  @NotNull
   @Min(value = 1, message = "Port can not be less than 1")
   @Max(value = 65535, message = "Port can not be greater than 65535")
   private Integer port;

@@ -7,59 +7,20 @@
 
 package eu.arrowhead.core.systemregistry;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-
-import org.glassfish.grizzly.http.server.CLStaticHttpHandler;
-import org.glassfish.grizzly.http.server.HttpHandler;
-import org.glassfish.grizzly.http.server.HttpServer;
-
 import eu.arrowhead.common.ArrowheadMain;
 import eu.arrowhead.common.misc.CoreSystem;
-import eu.arrowhead.core.systemregistry.filter.SystemRegACF;
-import io.swagger.v3.jaxrs2.integration.resources.OpenApiResource;
 
-@Path("/")
 public class SystemRegistryMain extends ArrowheadMain {
-	private SystemRegistryMain(String[] args) {
-		Set<Class<?>> classes = new HashSet<>(Arrays.asList(
-																												SystemRegistryResource.class, 
-																												SystemRegistryApi.class,
-																												SystemRegACF.class,
-																												OpenApiResource.class,
-																												SystemRegistryMain.class));
 
-		String[] packages = {
-				"eu.arrowhead.common.exception", 
-				"eu.arrowhead.common.json", 
-				"eu.arrowhead.common.filter", 
-				"eu.arrowhead.core.systemregistry"};
-		init(CoreSystem.SYSTEMREGISTRY, args, classes, packages);
-		
-		listenForInput();
-	}
-	protected void adaptServer(HttpServer server) {
-		final HttpHandler httpHandler = new CLStaticHttpHandler(HttpServer.class.getClassLoader(), "/swagger/");
-		server.getServerConfiguration().addHttpHandler(httpHandler, "/swagger");
-	}
+  private SystemRegistryMain(String[] args) {
+    String[] packages = {"eu.arrowhead.common.exception", "eu.arrowhead.common.json", "eu.arrowhead.common.filter",
+        "eu.arrowhead.core.systemregistry"};
+    init(CoreSystem.SYSTEM_REGISTRY, args, null, packages);
 
-	@GET
-	@Path("/swagger")
-	public Response swagger(@Context UriInfo uriInfo) throws URISyntaxException {
-		final URI uri = new URI(uriInfo.getBaseUri().toString() + "/swagger/");
-		return Response.status(Response.Status.TEMPORARY_REDIRECT).contentLocation(uri).build();
-	}
-	
-	public static void main(String[] args) {
-		new SystemRegistryMain(args);
-	}
+    listenForInput();
+  }
+
+  public static void main(String[] args) {
+    new SystemRegistryMain(args);
+  }
 }

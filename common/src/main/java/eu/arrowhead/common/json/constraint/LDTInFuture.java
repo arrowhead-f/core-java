@@ -26,7 +26,7 @@ public @interface LDTInFuture {
 
   Class<? extends Payload>[] payload() default {};
 
-  public class Validator implements ConstraintValidator<LDTInFuture, LocalDateTime> {
+  class Validator implements ConstraintValidator<LDTInFuture, LocalDateTime> {
 
     @Override
     public void initialize(final LDTInFuture LDTInFuture) {

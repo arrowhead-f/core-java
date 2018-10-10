@@ -14,6 +14,8 @@ The project has the following dependencies:
 * MySQL server 5.7 (other SQL databases can work with Hibernate ORM, but the `common module pom.xml` has to include the appropriate connector 
 dependency to use them)
 
+**NOTE:** MySQL server 8 is not supported yet! Be careful, this is the default one downloaded from the MySQL site.
+
 Each core system module has a `config` folder, and inside this folder a `default.conf` file, containing default values for the environment 
 variables needed to run the core system, such as database username/password, web-server address, logging settings and much more.
 
