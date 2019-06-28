@@ -72,8 +72,8 @@ final class DataManagerService {
 
     System.out.println("MySQL JDBC Driver Registered!");
     try {
-      connection = DriverManager.getConnection(props.getProperty("db_address")+props.getProperty("db_database"),props.getProperty("db_user"), props.getProperty("db_password"));
-      //connection = getConnection();
+      //connection = DriverManager.getConnection(props.getProperty("db_address")+props.getProperty("db_database"),props.getProperty("db_user"), props.getProperty("db_password"));
+      connection = getConnection();
       checkTables(connection, props.getProperty("db_database"));
       connection.close();
     } catch (SQLException e) {
@@ -285,7 +285,7 @@ final class DataManagerService {
       } else {
 	Statement stmt = conn.createStatement();
 	String sql = "INSERT INTO iot_devices(name) VALUES(\""+name+"\");"; //bug: check name for SQL injection!
-	//System.out.println(sql);
+	System.out.println(sql);
 	int mid = stmt.executeUpdate(sql, Statement.RETURN_GENERATED_KEYS);
 	ResultSet rs = stmt.getGeneratedKeys();
 	rs.next();
@@ -297,6 +297,7 @@ final class DataManagerService {
       }
   
     } catch (SQLException e) {
+      System.out.println("createEndpoint:: "+e.toString());
     }
     return true;
   }
