@@ -13,7 +13,6 @@ import eu.arrowhead.common.DatabaseManager;
 import eu.arrowhead.common.Utility;
 import eu.arrowhead.common.database.ArrowheadSystem;
 import eu.arrowhead.common.exception.ArrowheadException;
-import eu.arrowhead.common.messages.SigMLMessage;
 import eu.arrowhead.common.messages.SenMLMessage;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -79,20 +78,6 @@ final class ProxyService {
     return false;
   }
 
-  static boolean updateEndpoint(String serviceName, SigMLMessage msg) {
-    Iterator<ProxyElement> epi = endpoints.iterator();
-
-    while (epi.hasNext()) {
-      ProxyElement pe = epi.next();
-      if (serviceName.equals(pe.serviceName)) {
-	System.out.println("Found endpoint: " + pe.serviceName);
-	pe.msg = msg.e;
-	System.out.println("Updating with: " + msg.e.toString());
-        return true;
-      }
-    }
-    return false;
-  }
 
   static SenMLMessage fetchEndpoint(String serviceName) {
     Iterator<ProxyElement> epi = endpoints.iterator();

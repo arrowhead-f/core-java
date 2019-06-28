@@ -12,7 +12,6 @@ package eu.arrowhead.core.datamanager;
 import eu.arrowhead.common.Utility;
 import eu.arrowhead.common.exception.BadPayloadException;
 import eu.arrowhead.common.messages.SenMLMessage;
-//import eu.arrowhead.common.messages.SigMLMessage;
 import java.time.LocalDateTime;
 import java.util.concurrent.CompletableFuture;
 import java.util.List;
@@ -38,7 +37,7 @@ import javax.ws.rs.core.Response.Status;
 import org.apache.log4j.Logger;
 
 /**
- * This is the REST resource for the DataManager Core System.
+ * This is the REST resource for the DataManager Support Core System.
  */
 @Path("datamanager")
 @Consumes(MediaType.APPLICATION_JSON)
@@ -130,45 +129,7 @@ public class DataManagerResource {
     return Response.ok(jsonret, MediaType.APPLICATION_JSON).build();
   }
 
-/*  @PUT
-  @Path("historian/{consumerName}")
-  @Consumes("application/sigml+json")
-  public Response PutData(@PathParam("consumerName") String consumerName, @Valid SigMLMessage sml) {
-    boolean statusCode = DataManagerService.createEndpoint(consumerName);
-
-    System.out.println("PutData() from " + consumerName);
-
-    if (sml.getBn() == null)
-      sml.setBn(consumerName);
-    if (sml.getBt() == null)
-      sml.setBt((double)System.currentTimeMillis() / 1000.0);
-    for (SenMLMessage m : sml.e) {
-      if(m.getT() == null)
-	m.setT(0.0);
-    }
-
-    statusCode = DataManagerService.updateEndpoint(consumerName, sml);
-    System.out.println("putData returned with status code: " + statusCode + " from: "); // + sml.getBn() + " at: " + sml.getBt());
-
-    String jsonret = "{\"p\": "+sml.getP()+",\"x\": 0}";
-    return Response.ok(jsonret, MediaType.APPLICATION_JSON).build();
-  }
-*/
  
-  /*@PUT
-  @Path("historian/{consumerName}")
-  @Consumes("application/senml+json")
-  public Response PutData(@PathParam("consumerName") String consumerName, @Valid Vector<SenMLMessage> sml) {
-    boolean statusCode = DataManagerService.createEndpoint(consumerName);
-    statusCode = DataManagerService.updateEndpoint(consumerName, sml);
-    System.out.println("putData returned with status code: " + statusCode + " from: "); // + sml.getBn() + " at: " + sml.getBt());
-
-    //return Response.status(Status.OK).build();
-    String jsonret = "{\"rc\": 0}";
-    return Response.ok(jsonret, MediaType.APPLICATION_JSON).build();
-  }*/
-
-
   /* Proxy Service */
   @GET
   @Path("proxy")
@@ -214,25 +175,6 @@ public class DataManagerResource {
 
     return Response.status(Status.OK).entity(pe.msg).build();
   }
-
-
-  /*@PUT
-  @Path("proxy/{consumerName}")
-  @Consumes("application/sigml+json")
-  public Response proxyPut(@PathParam("consumerName") String consumerName, @Valid SigMLMessage sml) {
-    ProxyElement pe = ProxyService.getEndpoint(consumerName);
-    if (pe == null) {
-      System.out.println("consumerName: " + consumerName + " not found, creating");
-      pe = new ProxyElement(consumerName);
-      ProxyService.addEndpoint(pe);
-    }
-
-    boolean statusCode = ProxyService.updateEndpoint(consumerName, sml);
-    System.out.println("putData/SigML returned with status code: " + statusCode + " from: "); // + sigml.get(0).getBn() + " at: " + sml.get(0).getBt());
-
-    String jsonret = "{\"rc\": 0}";
-    return Response.ok(jsonret, MediaType.APPLICATION_JSON).build();
-  }*/
 
   @PUT
   @Path("proxy/{systemName}/{serviceName}")
