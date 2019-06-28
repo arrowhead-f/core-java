@@ -72,13 +72,15 @@ public class DataManagerResource {
 
 
   @GET
-  @Path("historian/{consumerName}")
+  @Path("historian/{systemName}/{serviceName}")
   @Produces("application/json")
-  public Response getData(@PathParam("consumerName") String consumerName, @QueryParam("count") @DefaultValue("1") String count_s, @Context UriInfo uriInfo) {
+  public Response getData(@PathParam("systemName") String systemName, @PathParam("serviceName") String serviceName, @QueryParam("count") @DefaultValue("1") String count_s, @Context UriInfo uriInfo) {
     int statusCode = 0;
     int count = Integer.parseInt(count_s);
-      
+     
+    System.out.println("Historian GET for system '"+systemName+"', service '"+serviceName+"'"); 
     System.out.println("getData requested with count: " + count);
+
     MultivaluedMap<String, String> queryParams = uriInfo.getQueryParameters(); 
     int i=0;
     String sig;
@@ -94,29 +96,22 @@ public class DataManagerResource {
     if (signals.size() == 0)
       signals = null;
     
-
-
-//    System.out.println("getData returned with count: " + );
-    //return Response.status(Status.OK).build();
-    /*SigMLMessage ret = null;
-    if(signals == null)
-      ret = DataManagerService.fetchEndpoint(consumerName, count);
-    else
-      ret = DataManagerService.fetchEndpoint(consumerName, count, signals);*/
     Vector<SenMLMessage> ret = null;
     if(signals == null)
-      ret = DataManagerService.fetchEndpoint(consumerName, count);
+      ret = DataManagerService.fetchEndpoint(serviceName, count);
     else
-      ret = DataManagerService.fetchEndpoint(consumerName, count, signals);
+      ret = DataManagerService.fetchEndpoint(serviceName, count, signals);
 
     return Response.status(Status.OK).entity(ret).build();
   }
 
+
   @PUT
-  @Path("historian/{consumerName}")
+  @Path("historian/{systemName}/{serviceName}")
   @Consumes("application/senml+json")
-  public Response PutData(@PathParam("consumerName") String consumerName, @Valid Vector<SenMLMessage> sml) {
-    boolean statusCode = DataManagerService.createEndpoint(consumerName);
+  public Response PutData(@PathParam("systemName") String systemName, @PathParam("serviceName") String serviceName, @Valid Vector<SenMLMessage> sml) {
+    boolean statusCode = DataManagerService.createEndpoint(serviceName);
+    System.out.println("Historian PUT for system '"+systemName+"', service '"+serviceName+"'"); 
     System.out.println("Got SenML message");
 
     SenMLMessage head = sml.firstElement();
@@ -128,7 +123,7 @@ public class DataManagerResource {
       if(s.getT() == null && s.getBt() != null)
 	s.setT(0.0);
     } 
-    statusCode = DataManagerService.updateEndpoint(consumerName, sml);
+    statusCode = DataManagerService.updateEndpoint(serviceName, sml);
     System.out.println("putData returned with status code: " + statusCode);
 
     String jsonret = "{\"p\": "+ 0 +",\"x\": 0}";
@@ -191,13 +186,28 @@ public class DataManagerResource {
 
 
   @GET
-  @Path("proxy/{consumerName}")
+  @Path("proxy/{systemName}")
   @Produces("application/json")
-  public Response proxyGet(@PathParam("consumerName") String consumerName) {
+  public Response proxyGet(@PathParam("systemName") String systemName) {
     int statusCode = 0;
-    ProxyElement pe = ProxyService.getEndpoint(consumerName);
+    List<ProxyElement> pes = ProxyService.getEndpoints(systemName);
+    if (pes == null) {
+      System.out.println("proxy GET to systemName: " + systemName + " not found");
+      //System.out.println("proxyGet returned with NULL data");
+      return Response.status(Status.NOT_FOUND).build();
+    }
+
+    return Response.status(Status.OK).entity(pes).build();
+  }
+
+  @GET
+  @Path("proxy/{systemName}/{serviceName}")
+  @Produces("application/json")
+  public Response proxyGet(@PathParam("systemName") String systemName, @PathParam("serviceName") String serviceName) {
+    int statusCode = 0;
+    ProxyElement pe = ProxyService.getEndpoint(serviceName);
     if (pe == null) {
-      System.out.println("proxy GET to consumerName: " + consumerName + " not found");
+      System.out.println("proxy GET to serviceName: " + serviceName + " not found");
       //System.out.println("proxyGet returned with NULL data");
       return Response.status(Status.NOT_FOUND).build();
     }
@@ -225,18 +235,18 @@ public class DataManagerResource {
   }*/
 
   @PUT
-  @Path("proxy/{consumerName}")
+  @Path("proxy/{systemName}/{serviceName}")
   @Consumes("application/senml+json")
-  public Response proxyPut(@PathParam("consumerName") String consumerName, @Valid Vector<SenMLMessage> sml) {
-    ProxyElement pe = ProxyService.getEndpoint(consumerName);
+  public Response proxyPut(@PathParam("systemName") String systemName, @PathParam("serviceName") String serviceName, @Valid Vector<SenMLMessage> sml) {
+    ProxyElement pe = ProxyService.getEndpoint(serviceName);
     if (pe == null) {
-      System.out.println("consumerName: " + consumerName + " not found, creating");
-      pe = new ProxyElement(consumerName);
+      System.out.println("serviceName: " + serviceName + " not found, creating");
+      pe = new ProxyElement(systemName, serviceName);
       ProxyService.addEndpoint(pe);
     }
 
     //System.out.println("sml: "+ sml + "\t"+sml.toString());
-    boolean statusCode = ProxyService.updateEndpoint(consumerName, sml);
+    boolean statusCode = ProxyService.updateEndpoint(serviceName, sml);
     System.out.println("putData/SenML returned with status code: " + statusCode + " from: " + sml.get(0).getBn() + " at: " + sml.get(0).getBt());
 
     String jsonret = "{\"rc\": 0}";

@@ -35,13 +35,28 @@ final class ProxyService {
 
   private static List<ProxyElement> endpoints = new ArrayList<>();
 
-  static ProxyElement getEndpoint(String name) {
+  static List<ProxyElement> getEndpoints(String systemName) {
+    List<ProxyElement> res = new ArrayList<>();
+    Iterator<ProxyElement> epi = endpoints.iterator();
+
+    while (epi.hasNext()) {
+      ProxyElement pe = epi.next();
+      if (systemName.equals(pe.systemName)) {
+	System.out.println("Found endpoint: " + pe.serviceName);
+        res.add(pe);
+      }
+    }
+    return res;
+  }
+
+
+  static ProxyElement getEndpoint(String serviceName) {
     Iterator<ProxyElement> epi = endpoints.iterator();
 
     while (epi.hasNext()) {
       ProxyElement curpe = epi.next();
-      System.out.println("Found endpoint: " + curpe.name);
-      if (name.equals(curpe.name)) {
+      System.out.println("Found endpoint: " + curpe.serviceName);
+      if (serviceName.equals(curpe.serviceName)) {
         return curpe;
       }
     }
@@ -49,13 +64,13 @@ final class ProxyService {
     return null;
   }
 
-  static boolean updateEndpoint(String name, Vector<SenMLMessage> msg) {
+  static boolean updateEndpoint(String serviceName, Vector<SenMLMessage> msg) {
     Iterator<ProxyElement> epi = endpoints.iterator();
 
     while (epi.hasNext()) {
       ProxyElement pe = epi.next();
-      if (name.equals(pe.name)) {
-	System.out.println("Found endpoint: " + pe.name);
+      if (serviceName.equals(pe.serviceName)) {
+	System.out.println("Found endpoint: " + pe.serviceName);
 	pe.msg = msg; //.get(0);
 	System.out.println("Updating with: " + msg.toString());
         return true;
@@ -64,13 +79,13 @@ final class ProxyService {
     return false;
   }
 
-  static boolean updateEndpoint(String name, SigMLMessage msg) {
+  static boolean updateEndpoint(String serviceName, SigMLMessage msg) {
     Iterator<ProxyElement> epi = endpoints.iterator();
 
     while (epi.hasNext()) {
       ProxyElement pe = epi.next();
-      if (name.equals(pe.name)) {
-	System.out.println("Found endpoint: " + pe.name);
+      if (serviceName.equals(pe.serviceName)) {
+	System.out.println("Found endpoint: " + pe.serviceName);
 	pe.msg = msg.e;
 	System.out.println("Updating with: " + msg.e.toString());
         return true;
@@ -79,17 +94,17 @@ final class ProxyService {
     return false;
   }
 
-  static SenMLMessage fetchEndpoint(String name) {
+  static SenMLMessage fetchEndpoint(String serviceName) {
     Iterator<ProxyElement> epi = endpoints.iterator();
 
     while (epi.hasNext()) {
       ProxyElement pe = epi.next();
-      if (name.equals(pe.name)) {
-	System.out.println("Found endpoint: " + pe.name);
+      if (serviceName.equals(pe.serviceName)) {
+	System.out.println("Found endpoint: " + pe.serviceName);
         return null; //pe.msg;
       }
     }
-    System.out.println("Endpoint: " + name + " not found");
+    System.out.println("Endpoint: " + serviceName + " not found");
     return null;
   }
 
@@ -98,7 +113,7 @@ final class ProxyService {
     return true;
   }
 
-  static boolean deleteEndpoint(String name) { //XXX: do not support this now right now
+  static boolean deleteEndpoint(String serviceName) { //XXX: do not support this now right now
     return false;
   }
 

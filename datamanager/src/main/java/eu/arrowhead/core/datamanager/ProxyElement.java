@@ -15,12 +15,15 @@ import eu.arrowhead.common.messages.SenMLMessage;
 
 public class ProxyElement {
 
-  public String name = null;
+  public String systemName = null;     // i.e. tempSys-1._Audon-Thermometer−01._http._tcp._arrowhead.eu
+  public String serviceName = null;           // i.e "_tempService1._tempSys-1. http._tcp._arrowhead.eu:8000"
+  public String serviceType = null;    // _Tempreatre._http._tcp. etc...
   public int p = -1;	      // p is valid when using SigmL, set to -1 if data is SenML
   public Vector<SenMLMessage> msg = null;
 
-  public ProxyElement(String name) {
-    this.name = new String(name);
+  public ProxyElement(String systemName, String serviceName) {
+    this.systemName = new String(systemName);
+    this.serviceName = new String(serviceName);
     this.p = -1;
     this.msg = null;
   }
@@ -30,8 +33,8 @@ public class ProxyElement {
    * @fn public ProxyElement(String name, Vector<SenMLMessage> senml)
    * @brief creates a new ProxyElement from a SenML message
    */
-  public ProxyElement(String name, Vector<SenMLMessage> senml) {
-    this.name = new String(name);
+  public ProxyElement(String serviceName, Vector<SenMLMessage> senml) {
+    this.serviceName = new String(serviceName);
     this.p = -1;
     this.msg = senml;
   }
@@ -41,8 +44,8 @@ public class ProxyElement {
    * @fn public ProxyElement(String name, SigMLMessage sigml)
    * @brief creates a new ProxyElement from a SigML message
    */
-  public ProxyElement(String name, SigMLMessage sigml) {
-    this.name = new String(name);
+  public ProxyElement(String serviceName, SigMLMessage sigml) {
+    this.serviceName = new String(serviceName);
     this.p = sigml.getP();
     this.msg = sigml.getSenML();
   }
