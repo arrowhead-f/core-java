@@ -15,6 +15,7 @@ import eu.arrowhead.common.messages.SenMLMessage;
 import java.time.LocalDateTime;
 import java.util.concurrent.CompletableFuture;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Vector;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
@@ -35,6 +36,12 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import org.apache.log4j.Logger;
+
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonElement;
+import com.google.gson.Gson;
+
 
 /**
  * This is the REST resource for the DataManager Support Core System.
@@ -67,6 +74,102 @@ public class DataManagerResource {
   @Path("historian")
   public String getInfo(@Context ContainerRequestContext requestContext) {
     return "Datamanager::Historian";
+  }
+
+  @PUT
+  @Path("historian/{systemName}")
+  @Consumes("application/json")
+  public Response PutHist(@PathParam("systemName") String systemName, String requestBody) {
+    JsonParser parser= new JsonParser();
+    try{
+      JsonObject obj = parser.parse(requestBody).getAsJsonObject();
+      System.out.println("<"+obj.toString()+">");
+
+      String op = obj.get("op").getAsString();
+      if(op.equals("list")){
+	System.out.println("OP: list");
+	ArrayList<String> services = DataManagerService.getServicesFromSystem(systemName);
+	/*for (String srv: services) {
+	  System.out.println(":" +srv);
+	}*/
+	Gson gson = new Gson();
+	JsonObject answer = new JsonObject();
+	JsonElement servicelist = gson.toJsonTree(services);
+	answer.add("listResult", servicelist);
+	String jsonStr = gson.toJson(answer);
+	//System.out.println("Asnwer: "+jsonStr);
+	
+	return Response.status(Status.OK).entity(jsonStr).type(MediaType.APPLICATION_JSON).build();
+      } else if(op.equals("create")){
+	System.out.println("OP: CREATE");
+	String srvName = obj.get("srvName").getAsString();
+	String srvType = obj.get("srvType").getAsString();
+	System.out.println("Create SRV: "+srvName+" of type: "+srvType+" for: " + systemName);
+
+	/* check if service already exists */
+	ArrayList<String> services = DataManagerService.getServicesFromSystem(systemName);
+	for (String srv: services) {
+	  if(srv.equals(srvName)){
+	      System.out.println("  service:" +srv + " already exists");
+	      //Response re = Response.status(409).build();
+	      Gson gson = new Gson();
+	      JsonObject answer = new JsonObject();
+	      answer.addProperty("createResult", "Already exists");
+	      String jsonStr = gson.toJson(answer);
+	      return Response.status(Status.CONFLICT).entity(jsonStr).type(MediaType.APPLICATION_JSON).build();
+	      //return re;
+	  }
+	}
+
+	/* create the service */
+	boolean ret = DataManagerService.addServiceForSystem(systemName, srvName);
+	if (ret==true)
+	  return Response.status(Status.CREATED).entity("{}").type(MediaType.APPLICATION_JSON).build();
+	else
+	  return Response.status(500).entity("{\"x\": \"Could not create service\"}").type(MediaType.APPLICATION_JSON).build();
+
+      } else if(op.equals("delete")){
+	System.out.println("OP: DELETE");
+	String srvName = obj.get("srvName").getAsString();
+	String srvType = obj.get("srvType").getAsString();
+	System.out.println("Delete SRV: "+srvName+" of type: "+srvType+" for: " + systemName);
+
+	/* check if service exists */
+	ArrayList<String> services = DataManagerService.getServicesFromSystem(systemName);
+	boolean found = false;
+	for (String srv: services) {
+	  if(srv.equals(srvName)){
+	    found = true;
+	    break;
+	  }
+	}
+	if (!found) {
+	  System.out.println("  service:" +srvName + " does not exists");
+	  Gson gson = new Gson();
+	  JsonObject answer = new JsonObject();
+	  answer.addProperty("createResult", "No such service");
+	  String jsonStr = gson.toJson(answer);
+	  return Response.status(Status.BAD_REQUEST).entity(jsonStr).type(MediaType.APPLICATION_JSON).build();
+	}
+
+	/* delete the service */
+	boolean ret = DataManagerService.deleteServiceForSystem(systemName, srvName);
+	if (ret==true)
+	  return Response.status(Status.CREATED).entity("{}").type(MediaType.APPLICATION_JSON).build();
+	else
+	  return Response.status(500).entity("{\"x\": \"Could not delete service\"}").type(MediaType.APPLICATION_JSON).build();
+
+      } else {
+	System.out.println("Unsupported OP: " + op);
+	Response re = Response.status(300).build();
+	return re;
+      }
+    } catch(Exception je){
+      System.out.println(je.toString());
+      Response re = Response.status(300).build();
+      return re;
+    }
+
   }
 
 
@@ -110,8 +213,8 @@ public class DataManagerResource {
   @Consumes("application/senml+json")
   public Response PutData(@PathParam("systemName") String systemName, @PathParam("serviceName") String serviceName, @Valid Vector<SenMLMessage> sml) {
     boolean statusCode = DataManagerService.createEndpoint(serviceName);
-    System.out.println("Historian PUT for system '"+systemName+"', service '"+serviceName+"'"); 
-    System.out.println("Got SenML message");
+    //System.out.println("Historian PUT for system '"+systemName+"', service '"+serviceName+"'"); 
+    //System.out.println("Got SenML message");
 
     SenMLMessage head = sml.firstElement();
     if(head.getBt() == null)
@@ -123,7 +226,7 @@ public class DataManagerResource {
 	s.setT(0.0);
     } 
     statusCode = DataManagerService.updateEndpoint(serviceName, sml);
-    System.out.println("putData returned with status code: " + statusCode);
+    //System.out.println("putData returned with status code: " + statusCode);
 
     String jsonret = "{\"p\": "+ 0 +",\"x\": 0}";
     return Response.ok(jsonret, MediaType.APPLICATION_JSON).build();

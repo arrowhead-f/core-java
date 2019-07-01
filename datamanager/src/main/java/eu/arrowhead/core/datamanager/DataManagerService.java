@@ -59,8 +59,14 @@ final class DataManagerService {
   //private static List<String> endpoints = new ArrayList<>();
 
 
+  /**
+   * @fn static boolean Init(TypeSafeProperties propss)
+   * @brief 
+   *
+   */
   static boolean Init(TypeSafeProperties propss){
     props = propss;
+
     try {
       Class.forName("com.mysql.jdbc.Driver");
     } catch (ClassNotFoundException e) {
@@ -69,9 +75,8 @@ final class DataManagerService {
       return false;
     }
 
-    System.out.println("MySQL JDBC Driver Registered!");
+    //System.out.println("MySQL JDBC Driver Registered!");
     try {
-      //connection = DriverManager.getConnection(props.getProperty("db_address")+props.getProperty("db_database"),props.getProperty("db_user"), props.getProperty("db_password"));
       connection = getConnection();
       checkTables(connection, props.getProperty("db_database"));
       connection.close();
@@ -84,6 +89,12 @@ final class DataManagerService {
     return true;
   }
 
+
+  /**
+   * @fn private static Connection getConnection()
+   * @brief 
+   *
+   */
   private static Connection getConnection() throws SQLException {
     Connection conn = DriverManager.getConnection(props.getProperty("db_address")+props.getProperty("db_database"), props.getProperty("db_user"), props.getProperty("db_password"));
 
@@ -91,10 +102,21 @@ final class DataManagerService {
   }
 
 
+  /**
+   * @fn private static void closeConnection(Connection conn)
+   * @brief 
+   *
+   */
   private static void closeConnection(Connection conn) throws SQLException {
     conn.close();
   }
 
+
+  /**
+   * @fn public static int checkTables(Connection conn, String database)
+   * @brief 
+   *
+   */
   public static int checkTables(Connection conn, String database) {
     //if ( enable_database == false)
     //return -1;
@@ -107,8 +129,10 @@ final class DataManagerService {
       return -1;
     }
 
+    // must be renamed to dmhist_services
     sql = "CREATE TABLE IF NOT EXISTS iot_devices (\n" 
       + "id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,\n" 
+      + "systemName varchar(64) NOT NULL UNIQUE,\n" 
       + "name varchar(64) NOT NULL UNIQUE,\n" 
       + "alias varchar(64),\n" 
       + "last_update datetime" 
@@ -121,6 +145,7 @@ final class DataManagerService {
       return -1;
     }
 
+    // must be renamed to dmhist_files
     sql = "CREATE TABLE IF NOT EXISTS iot_files (\n"
       + "id BIGINT NOT NULL PRIMARY KEY AUTO_INCREMENT,\n"
       + "did INT NOT NULL,\n"
@@ -141,6 +166,7 @@ final class DataManagerService {
       return -2;
     }
 
+    // must be renamed to dmhist_messages
     sql = "CREATE TABLE IF NOT EXISTS iot_messages (\n"
       + "id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,\n"
       + "did INT(8) NOT NULL,\n"
@@ -158,6 +184,7 @@ final class DataManagerService {
       return -2;
     }
 
+    // must be renamed to dmhist_entries NOT USED ANY LONGER!!!!!
     sql = "CREATE TABLE IF NOT EXISTS iot_entries (\n"
       + "id BIGINT NOT NULL PRIMARY KEY AUTO_INCREMENT,\n"
       + "did INT NOT NULL,\n"
@@ -186,20 +213,19 @@ final class DataManagerService {
 
 
   /**
-   * Returns the database ID of a specific system
+   * @fn static int serviceToID(String serviceName, Connection conn)
+   * @brief Returns the database ID of a specific service
    *
    */
-  static int macToID(String name, Connection conn) {
+  static int serviceToID(String serviceName, Connection conn) {
     int id=-1;
 
-    System.out.println("macToID('"+name+"')");
+    System.out.println("serviceToID('"+serviceName+"')");
     Statement stmt = null;
     try {
-      //Class.forName("com.mysql.jdbc.Driver");
-
       stmt = conn.createStatement();
       String sql;
-      sql = "SELECT id FROM iot_devices WHERE name='"+name+"';";
+      sql = "SELECT id FROM iot_devices WHERE name='"+serviceName+"';";
       ResultSet rs = stmt.executeQuery(sql);
 
       rs.next();
@@ -215,16 +241,130 @@ final class DataManagerService {
       e.printStackTrace();
     }
 
-    //System.out.println("macToID('"+name+"')="+id);
+    //System.out.println("serviceToID('"+serviceName+"')="+id);
     return id;
   }
 
 
+  static boolean addServiceForSystem(String systemName, String serviceName){
+    Connection conn = null;
+    try {
+      conn = getConnection();
+      int id = serviceToID(serviceName, conn);
+      System.out.println("addServiceForSystem: found " + id);
+      if (id != -1) {
+	closeConnection(conn);
+	return false; //already exists
+      } else {
+	Statement stmt = conn.createStatement();
+	String sql = "INSERT INTO iot_devices(systemName, name) VALUES(\""+systemName+"\", \""+serviceName+"\");"; //bug: check name for SQL injection!
+	System.out.println(sql);
+	int mid = stmt.executeUpdate(sql, Statement.RETURN_GENERATED_KEYS);
+	ResultSet rs = stmt.getGeneratedKeys();
+	rs.next();
+	id = rs.getInt(1);
+	rs.close();
+	System.out.println("addServiceForSystem: created " + id);
+
+	closeConnection(conn);conn=null;
+      }
+  
+    } catch (SQLException e) {
+      System.out.println("addServiceForSystem:: "+e.toString());
+      return false;
+    }
+
+    try {
+      if(conn != null)
+	closeConnection(conn);
+    } catch (SQLException e) {}
+
+    return true;
+  }
+
+
+  /**
+   * @fn static boolean deleteServiceForSystem(String systemName, String serviceName)
+   * @brief Deletes a service, and all related messages and files
+   * @param systemName The name of the hosting system
+   * @param serviceName The name of the service
+   * @return true of the service could be deleted, false otherwise
+   */
+  static boolean deleteServiceForSystem(String systemName, String serviceName){
+    Connection conn = null;
+    try {
+      conn = getConnection();
+      int id = serviceToID(serviceName, conn);
+      System.out.println("deleteServiceForSystem: found " + id);
+      if (id == -1) {
+	closeConnection(conn);
+	return false; //does not exist
+      } else {
+	Statement stmt = conn.createStatement();
+	String sql = "DELETE FROM iot_devices WHERE systemName=\""+systemName+"\" AND name=\""+serviceName+"\";"; //bug: check name for SQL injection!
+	//System.out.println(sql);
+	stmt.executeUpdate(sql);
+	sql = "DELETE FROM iot_messages WHERE did=id;";
+	//System.out.println(sql);
+	stmt.executeUpdate(sql);
+	sql = "DELETE FROM iot_files WHERE did=id;";
+	//System.out.println(sql);
+	stmt.executeUpdate(sql);
+
+	closeConnection(conn);conn=null;
+      }
+  
+    } catch (SQLException e) {
+      System.out.println("addServiceForSystem:: "+e.toString());
+      return false;
+    }
+
+    try {
+      if(conn != null)
+	closeConnection(conn);
+    } catch (SQLException e) {}
+
+    return true;
+  }
+
+
+  /**
+   * @fn
+   *
+   */
+  static ArrayList<String> getServicesFromSystem(String systemName){
+    ArrayList<String> ret = new ArrayList<String>();
+    try {
+      Connection conn = getConnection();
+      Statement stmt = conn.createStatement();
+      String sql = "SELECT DISTINCT(name) FROM iot_devices WHERE systemName='"+systemName+"';";
+      //System.out.println(sql);
+
+      ResultSet rs = stmt.executeQuery(sql);
+      while(rs.next() == true) {
+	//System.out.println("---"+rs.getString(1));
+	ret.add(rs.getString(1));
+      }
+    }catch(SQLException db){
+      System.out.println(db.toString());
+    }
+
+    try {
+      connection.close();
+    }catch(SQLException db){}
+
+    return ret;
+  }
+
+  /**
+   * @fn static boolean updateEndpoint(String name, Vector<SenMLMessage> msg)
+   *
+   */
   static boolean updateEndpoint(String name, Vector<SenMLMessage> msg) {
     boolean ret = false;
     try {
       Connection conn = getConnection();
-      int id = macToID(name, conn);
+      int id = serviceToID(name, conn);
       if (id != -1) {
 	Statement stmt = conn.createStatement();
 	String sql = "INSERT INTO iot_messages(did, ts, msg, stored) VALUES("+id+", 0, '"+msg.toString()+"',NOW());"; //how to escape "
@@ -244,10 +384,14 @@ final class DataManagerService {
   }
 
 
+  /**
+   * @fn static boolean createEndpoint(String name)
+   *
+   */
   static boolean createEndpoint(String name) {
     try {
       Connection conn = getConnection();
-      int id = macToID(name, conn);
+      int id = serviceToID(name, conn);
       System.out.println("createEndpoint: found " + id);
       if (id != -1) {
 	closeConnection(conn);
@@ -273,10 +417,14 @@ final class DataManagerService {
   }
 
 
+  /**
+   * @fn static Vector<SenMLMessage> fetchEndpoint(String name, int count, Vector<String> signals)
+   *
+   */
   static Vector<SenMLMessage> fetchEndpoint(String name, int count, Vector<String> signals) {
     try {
       Connection conn = getConnection();
-      int id = macToID(name, conn);
+      int id = serviceToID(name, conn);
       System.out.println("Got id of: " + id);
       String signalss = "";
       for (String sig: signals) {
@@ -327,10 +475,18 @@ final class DataManagerService {
     return null;
   }
 
+
+  /**
+   * @fn static Vector<SenMLMessage> fetchEndpoint(String name, int count)
+   * @brief
+   * @param name
+   * @param count
+   * @return
+   */
   static Vector<SenMLMessage> fetchEndpoint(String name, int count) {
     try {
       Connection conn = getConnection();
-      int id = macToID(name, conn);
+      int id = serviceToID(name, conn);
       System.out.println("Got id of: " + id);
       if (id != -1) {
 	Statement stmt = conn.createStatement();
@@ -374,9 +530,5 @@ final class DataManagerService {
     return null;
   }
 
-
-  static boolean deleteEndpoint(String name) { //XXX: do not support this now right now
-    return false;
-  }
 
 }

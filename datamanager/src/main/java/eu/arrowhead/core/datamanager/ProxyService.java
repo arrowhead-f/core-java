@@ -28,12 +28,14 @@ import java.util.stream.Stream;
 import org.apache.log4j.Logger;
 
 final class ProxyService {
-
   private static final Logger log = Logger.getLogger(DataManagerResource.class.getName());
-  //private static final DatabaseManager dm = DatabaseManager.getInstance();
-
   private static List<ProxyElement> endpoints = new ArrayList<>();
 
+
+  /**
+   * @fn static List<ProxyElement> getEndpoints(String systemName)
+   *
+   */
   static List<ProxyElement> getEndpoints(String systemName) {
     List<ProxyElement> res = new ArrayList<>();
     Iterator<ProxyElement> epi = endpoints.iterator();
@@ -49,6 +51,10 @@ final class ProxyService {
   }
 
 
+  /**
+   * @fn static ProxyElement getEndpoint(String serviceName)
+   *
+   */
   static ProxyElement getEndpoint(String serviceName) {
     Iterator<ProxyElement> epi = endpoints.iterator();
 
@@ -63,6 +69,12 @@ final class ProxyService {
     return null;
   }
 
+
+  /**
+   * @fn static boolean updateEndpoint(String serviceName, Vector<SenMLMessage> msg)
+   * @brief
+   *
+   */
   static boolean updateEndpoint(String serviceName, Vector<SenMLMessage> msg) {
     Iterator<ProxyElement> epi = endpoints.iterator();
 
@@ -79,6 +91,11 @@ final class ProxyService {
   }
 
 
+  /**
+   * @fn static SenMLMessage fetchEndpoint(String serviceName)
+   * @brief
+   *
+   */
   static SenMLMessage fetchEndpoint(String serviceName) {
     Iterator<ProxyElement> epi = endpoints.iterator();
 
@@ -93,15 +110,25 @@ final class ProxyService {
     return null;
   }
 
+
+  /**
+   * @fn static boolean addEndpoint(ProxyElement e)
+   * @brief
+   *
+   */
   static boolean addEndpoint(ProxyElement e) {
     endpoints.add(e);
     return true;
   }
 
+
+  /**
+   * @fn static boolean deleteEndpoint(String serviceName)
+   * @brief
+   *
+   */
   static boolean deleteEndpoint(String serviceName) { //XXX: do not support this now right now
     return false;
   }
 
-
-  
 }
