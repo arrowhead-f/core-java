@@ -130,7 +130,7 @@ final class DataManagerService {
     }
 
     // must be renamed to dmhist_services
-    sql = "CREATE TABLE IF NOT EXISTS iot_devices (\n" 
+    sql = "CREATE TABLE IF NOT EXISTS dmhist_services (\n" 
       + "id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,\n" 
       + "systemName varchar(64) NOT NULL UNIQUE,\n" 
       + "name varchar(64) NOT NULL UNIQUE,\n" 
@@ -156,7 +156,7 @@ final class DataManagerService {
       +" filename varchar(64) NOT NULL,\n"
       + "len int,\n"
       + "crc32 int,\n"
-      + "FOREIGN KEY(did) REFERENCES iot_devices(id) ON DELETE CASCADE"
+      + "FOREIGN KEY(did) REFERENCES dmhist_services(id) ON DELETE CASCADE"
       + ")\n";
 
     try {
@@ -173,7 +173,7 @@ final class DataManagerService {
       + "ts BIGINT UNSIGNED NOT NULL,\n"
       + "msg BLOB NOT NULL,\n"
       + "stored datetime,\n"
-      + "FOREIGN KEY(did) REFERENCES iot_devices(id) ON DELETE CASCADE"
+      + "FOREIGN KEY(did) REFERENCES dmhist_services(id) ON DELETE CASCADE"
       + ")\n";
 
     try {
@@ -195,7 +195,7 @@ final class DataManagerService {
       + "v  DOUBLE,\n"
       + "sv varchar(32),\n"
       + "bv BOOLEAN,\n"
-      + "FOREIGN KEY(did) REFERENCES iot_devices(id) ON DELETE CASCADE,\n"
+      + "FOREIGN KEY(did) REFERENCES dmhist_services(id) ON DELETE CASCADE,\n"
       + "FOREIGN KEY(mid) REFERENCES iot_messages(id) ON DELETE CASCADE"
       + ")\n";
 
@@ -225,7 +225,7 @@ final class DataManagerService {
     try {
       stmt = conn.createStatement();
       String sql;
-      sql = "SELECT id FROM iot_devices WHERE name='"+serviceName+"';";
+      sql = "SELECT id FROM dmhist_services WHERE name='"+serviceName+"';";
       ResultSet rs = stmt.executeQuery(sql);
 
       rs.next();
@@ -257,7 +257,7 @@ final class DataManagerService {
 	return false; //already exists
       } else {
 	Statement stmt = conn.createStatement();
-	String sql = "INSERT INTO iot_devices(systemName, name) VALUES(\""+systemName+"\", \""+serviceName+"\");"; //bug: check name for SQL injection!
+	String sql = "INSERT INTO dmhist_services(systemName, name) VALUES(\""+systemName+"\", \""+serviceName+"\");"; //bug: check name for SQL injection!
 	System.out.println(sql);
 	int mid = stmt.executeUpdate(sql, Statement.RETURN_GENERATED_KEYS);
 	ResultSet rs = stmt.getGeneratedKeys();
@@ -301,7 +301,7 @@ final class DataManagerService {
 	return false; //does not exist
       } else {
 	Statement stmt = conn.createStatement();
-	String sql = "DELETE FROM iot_devices WHERE systemName=\""+systemName+"\" AND name=\""+serviceName+"\";"; //bug: check name for SQL injection!
+	String sql = "DELETE FROM dmhist_services WHERE systemName=\""+systemName+"\" AND name=\""+serviceName+"\";"; //bug: check name for SQL injection!
 	//System.out.println(sql);
 	stmt.executeUpdate(sql);
 	sql = "DELETE FROM iot_messages WHERE did=id;";
@@ -332,12 +332,48 @@ final class DataManagerService {
    * @fn
    *
    */
+  static ArrayList<String> getSystems(){
+    ArrayList<String> ret = new ArrayList<String>();
+    Connection conn = null;
+    try {
+      conn = getConnection();
+      Statement stmt = conn.createStatement();
+      String sql = "SELECT DISTINCT(systemname) FROM dmhist_services;";
+      //System.out.println(sql);
+      ResultSet rs = stmt.executeQuery(sql);
+      while(rs.next() == true) {
+	String system = rs.getString(1);
+	ret.add(system);
+      }
+      rs.close();
+      stmt.close();
+      closeConnection(conn);
+      conn = null;
+    } catch (SQLException e) {
+      System.err.println(e.toString());
+    }
+
+    if (conn != null) {
+      try {
+	closeConnection(conn);
+    } catch (SQLException e) {
+    }
+
+    }
+    return ret;
+  }
+
+
+  /**
+   * @fn
+   *
+   */
   static ArrayList<String> getServicesFromSystem(String systemName){
     ArrayList<String> ret = new ArrayList<String>();
     try {
       Connection conn = getConnection();
       Statement stmt = conn.createStatement();
-      String sql = "SELECT DISTINCT(name) FROM iot_devices WHERE systemName='"+systemName+"';";
+      String sql = "SELECT DISTINCT(name) FROM dmhist_services WHERE systemName='"+systemName+"';";
       //System.out.println(sql);
 
       ResultSet rs = stmt.executeQuery(sql);
@@ -398,7 +434,7 @@ final class DataManagerService {
 	return true; //already exists
       } else {
 	Statement stmt = conn.createStatement();
-	String sql = "INSERT INTO iot_devices(name) VALUES(\""+name+"\");"; //bug: check name for SQL injection!
+	String sql = "INSERT INTO dmhist_services(name) VALUES(\""+name+"\");"; //bug: check name for SQL injection!
 	System.out.println(sql);
 	int mid = stmt.executeUpdate(sql, Statement.RETURN_GENERATED_KEYS);
 	ResultSet rs = stmt.getGeneratedKeys();

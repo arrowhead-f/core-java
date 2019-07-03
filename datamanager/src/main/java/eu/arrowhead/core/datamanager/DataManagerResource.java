@@ -62,23 +62,39 @@ public class DataManagerResource {
 
 
   /* Historian Service */
-  @POST
+  /*@POST
   @Path("historian")
   public Response storeData(@Valid SenMLMessage sml, @Context ContainerRequestContext requestContext) {
     int statusCode = 0;
     log.info("storage returned with status code: " + 0);
     return Response.status(Status.OK).build();
-  }
+  }*/
+
 
   @GET
   @Path("historian")
-  public String getInfo(@Context ContainerRequestContext requestContext) {
-    return "Datamanager::Historian";
+  @Produces("application/json")
+  public Response getInfo(@Context ContainerRequestContext requestContext) {
+    Gson gson = new Gson();
+    ArrayList<String> systems = DataManagerService.getSystems();
+    JsonObject answer = new JsonObject();
+    JsonElement systemlist = gson.toJsonTree(systems);
+    answer.add("systems", systemlist);
+    String jsonStr = gson.toJson(answer);
+    return Response.status(Status.OK).entity(jsonStr).type(MediaType.APPLICATION_JSON).build();
   }
+
+  @GET
+  @Path("historian/{systemName}")
+  public Response getHist(@PathParam("systemName") String systemName) {
+    return PutHist(systemName, "{\"op\": \"list\"}");
+  }
+
 
   @PUT
   @Path("historian/{systemName}")
   @Consumes("application/json")
+  @Produces("application/json")
   public Response PutHist(@PathParam("systemName") String systemName, String requestBody) {
     JsonParser parser= new JsonParser();
     try{
@@ -95,29 +111,27 @@ public class DataManagerResource {
 	Gson gson = new Gson();
 	JsonObject answer = new JsonObject();
 	JsonElement servicelist = gson.toJsonTree(services);
-	answer.add("listResult", servicelist);
+	answer.add("services", servicelist);
 	String jsonStr = gson.toJson(answer);
 	//System.out.println("Asnwer: "+jsonStr);
 	
 	return Response.status(Status.OK).entity(jsonStr).type(MediaType.APPLICATION_JSON).build();
       } else if(op.equals("create")){
-	System.out.println("OP: CREATE");
+	//System.out.println("OP: CREATE");
 	String srvName = obj.get("srvName").getAsString();
 	String srvType = obj.get("srvType").getAsString();
-	System.out.println("Create SRV: "+srvName+" of type: "+srvType+" for: " + systemName);
+	//System.out.println("Create SRV: "+srvName+" of type: "+srvType+" for: " + systemName);
 
 	/* check if service already exists */
 	ArrayList<String> services = DataManagerService.getServicesFromSystem(systemName);
 	for (String srv: services) {
 	  if(srv.equals(srvName)){
-	      System.out.println("  service:" +srv + " already exists");
-	      //Response re = Response.status(409).build();
+	      //System.out.println("  service:" +srv + " already exists");
 	      Gson gson = new Gson();
 	      JsonObject answer = new JsonObject();
 	      answer.addProperty("createResult", "Already exists");
 	      String jsonStr = gson.toJson(answer);
 	      return Response.status(Status.CONFLICT).entity(jsonStr).type(MediaType.APPLICATION_JSON).build();
-	      //return re;
 	  }
 	}
 
@@ -129,7 +143,7 @@ public class DataManagerResource {
 	  return Response.status(500).entity("{\"x\": \"Could not create service\"}").type(MediaType.APPLICATION_JSON).build();
 
       } else if(op.equals("delete")){
-	System.out.println("OP: DELETE");
+	//System.out.println("OP: DELETE");
 	String srvName = obj.get("srvName").getAsString();
 	String srvType = obj.get("srvType").getAsString();
 	System.out.println("Delete SRV: "+srvName+" of type: "+srvType+" for: " + systemName);
