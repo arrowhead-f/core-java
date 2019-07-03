@@ -32,12 +32,29 @@ final class ProxyService {
   private static List<ProxyElement> endpoints = new ArrayList<>();
 
 
+
+  /**
+   * @fn static List<ProxyElement> getAllEndpoints()
+   *
+   */
+  static List<String> getAllEndpoints() {
+    List<String> res = new ArrayList<>();
+    Iterator<ProxyElement> epi = endpoints.iterator();
+
+    while (epi.hasNext()) {
+      ProxyElement pe = epi.next();
+      res.add(pe.systemName);
+    }
+    return res;
+  }
+
+
   /**
    * @fn static List<ProxyElement> getEndpoints(String systemName)
    *
    */
-  static List<ProxyElement> getEndpoints(String systemName) {
-    List<ProxyElement> res = new ArrayList<>();
+  static ArrayList<ProxyElement> getEndpoints(String systemName) {
+    ArrayList<ProxyElement> res = new ArrayList<>();
     Iterator<ProxyElement> epi = endpoints.iterator();
 
     while (epi.hasNext()) {
@@ -117,6 +134,10 @@ final class ProxyService {
    *
    */
   static boolean addEndpoint(ProxyElement e) {
+    for(ProxyElement tmp: endpoints) {
+      if (tmp.serviceName.equals(e.serviceName)) // already exists
+        return false;
+    }
     endpoints.add(e);
     return true;
   }

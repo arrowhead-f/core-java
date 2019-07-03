@@ -62,27 +62,22 @@ public class DataManagerResource {
 
 
   /* Historian Service */
-  /*@POST
-  @Path("historian")
-  public Response storeData(@Valid SenMLMessage sml, @Context ContainerRequestContext requestContext) {
-    int statusCode = 0;
-    log.info("storage returned with status code: " + 0);
-    return Response.status(Status.OK).build();
-  }*/
-
 
   @GET
   @Path("historian")
   @Produces("application/json")
   public Response getInfo(@Context ContainerRequestContext requestContext) {
     Gson gson = new Gson();
+
     ArrayList<String> systems = DataManagerService.getSystems();
     JsonObject answer = new JsonObject();
     JsonElement systemlist = gson.toJsonTree(systems);
     answer.add("systems", systemlist);
+
     String jsonStr = gson.toJson(answer);
     return Response.status(Status.OK).entity(jsonStr).type(MediaType.APPLICATION_JSON).build();
   }
+
 
   @GET
   @Path("historian/{systemName}")
@@ -99,7 +94,6 @@ public class DataManagerResource {
     JsonParser parser= new JsonParser();
     try{
       JsonObject obj = parser.parse(requestBody).getAsJsonObject();
-      System.out.println("<"+obj.toString()+">");
 
       String op = obj.get("op").getAsString();
       if(op.equals("list")){
@@ -250,16 +244,16 @@ public class DataManagerResource {
   /* Proxy Service */
   @GET
   @Path("proxy")
-  public String getInfo() {
-    return "DataManager::Proxy";
-  }
+  @Produces("application/json")
+  public Response getSystems() {
+    Gson gson = new Gson();
+    List<String> pes = ProxyService.getAllEndpoints();
+    JsonObject answer = new JsonObject();
+    JsonElement systemlist = gson.toJsonTree(pes);
+    answer.add("systems", systemlist);
 
-  @POST
-  @Path("proxy")
-  public Response proxy(@Context ContainerRequestContext requestContext) {
-    int statusCode = 0;
-    log.info("Proxy returned with status code: " + 0);
-    return Response.status(Status.OK).build();
+    String jsonStr = gson.toJson(answer);
+    return Response.status(Status.OK).entity(jsonStr).type(MediaType.APPLICATION_JSON).build();
   }
 
 
@@ -269,14 +263,78 @@ public class DataManagerResource {
   public Response proxyGet(@PathParam("systemName") String systemName) {
     int statusCode = 0;
     List<ProxyElement> pes = ProxyService.getEndpoints(systemName);
-    if (pes == null) {
+    if (pes.size() == 0) {
       System.out.println("proxy GET to systemName: " + systemName + " not found");
-      //System.out.println("proxyGet returned with NULL data");
       return Response.status(Status.NOT_FOUND).build();
     }
 
-    return Response.status(Status.OK).entity(pes).build();
+    ArrayList<String> systems= new ArrayList<String>();
+    for (ProxyElement pe: pes) {
+      systems.add(pe.serviceName);
+    }
+    Gson gson = new Gson();
+    JsonObject answer = new JsonObject();
+    JsonElement servicelist = gson.toJsonTree(systems);
+    answer.add("services", servicelist);
+    String jsonStr = gson.toJson(answer);
+    return Response.status(Status.OK).entity(jsonStr).type(MediaType.APPLICATION_JSON).build();
   }
+
+
+  @PUT
+  @Path("proxy/{systemName}")
+  @Consumes("application/json")
+  @Produces("application/json")
+  public Response PutProxy(@PathParam("systemName") String systemName, String requestBody) {
+    JsonParser parser= new JsonParser();
+    try{
+      JsonObject obj = parser.parse(requestBody).getAsJsonObject();
+
+      String op = obj.get("op").getAsString();
+      if(op.equals("list")){
+
+	Response re = Response.status(200).build();
+	return re;
+      } else if(op.equals("create")){
+	String srvName = obj.get("srvName").getAsString();
+	String srvType = obj.get("srvType").getAsString();
+	System.out.println("Create SRV: "+srvName+" of type: "+srvType+" for: " + systemName);
+
+	/* check if service already exists */
+	ArrayList<ProxyElement> services = ProxyService.getEndpoints(systemName);
+	for (ProxyElement srv: services) {
+	  if(srv.serviceName.equals(srvName)){
+	    Gson gson = new Gson();
+	    JsonObject answer = new JsonObject();
+	    answer.addProperty("createResult", "Already exists");
+	    String jsonStr = gson.toJson(answer);
+	    return Response.status(Status.CONFLICT).entity(jsonStr).type(MediaType.APPLICATION_JSON).build();
+	  }
+	}
+
+	/* create the service */
+	boolean ret = ProxyService.addEndpoint(new ProxyElement(systemName, srvName));
+	if (ret==true)
+	  return Response.status(Status.CREATED).entity("{}").type(MediaType.APPLICATION_JSON).build();
+	else
+	  return Response.status(500).entity("{\"x\": \"Could not create service\"}").type(MediaType.APPLICATION_JSON).build();
+
+      } else if(op.equals("delete")){
+
+      } else {
+	System.out.println("Unsupported OP: " + op);
+	Response re = Response.status(300).build();
+	return re;
+      }
+    } catch(Exception je){
+      System.out.println(je.toString());
+      Response re = Response.status(300).build();
+      return re;
+    }
+    Response re = Response.status(300).build();
+    return re;
+  }
+ 
 
   @GET
   @Path("proxy/{systemName}/{serviceName}")
@@ -293,15 +351,14 @@ public class DataManagerResource {
     return Response.status(Status.OK).entity(pe.msg).build();
   }
 
+
   @PUT
   @Path("proxy/{systemName}/{serviceName}")
   @Consumes("application/senml+json")
   public Response proxyPut(@PathParam("systemName") String systemName, @PathParam("serviceName") String serviceName, @Valid Vector<SenMLMessage> sml) {
     ProxyElement pe = ProxyService.getEndpoint(serviceName);
     if (pe == null) {
-      System.out.println("serviceName: " + serviceName + " not found, creating");
-      pe = new ProxyElement(systemName, serviceName);
-      ProxyService.addEndpoint(pe);
+      return Response.status(Status.NOT_FOUND).build();
     }
 
     //System.out.println("sml: "+ sml + "\t"+sml.toString());
