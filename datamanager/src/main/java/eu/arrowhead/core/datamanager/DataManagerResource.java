@@ -56,12 +56,11 @@ public class DataManagerResource {
   @GET
   @Produces(MediaType.TEXT_PLAIN)
   public String getIt() {
-    log.info("datamanager");
     return "This is the DataManager Arrowhead Core System.";
   }
 
 
-  /* Historian Service */
+  /* Historian resources */
 
   @GET
   @Path("historian")
@@ -97,7 +96,7 @@ public class DataManagerResource {
 
       String op = obj.get("op").getAsString();
       if(op.equals("list")){
-	System.out.println("OP: list");
+	//System.out.println("OP: list");
 	ArrayList<String> services = DataManagerService.getServicesFromSystem(systemName);
 	/*for (String srv: services) {
 	  System.out.println(":" +srv);
@@ -120,7 +119,7 @@ public class DataManagerResource {
 	ArrayList<String> services = DataManagerService.getServicesFromSystem(systemName);
 	for (String srv: services) {
 	  if(srv.equals(srvName)){
-	      //System.out.println("  service:" +srv + " already exists");
+	      log.info("  service:" +srv + " already exists");
 	      Gson gson = new Gson();
 	      JsonObject answer = new JsonObject();
 	      answer.addProperty("createResult", "Already exists");
@@ -137,7 +136,7 @@ public class DataManagerResource {
 	  return Response.status(500).entity("{\"x\": \"Could not create service\"}").type(MediaType.APPLICATION_JSON).build();
 
       } else if(op.equals("delete")){
-	//System.out.println("OP: DELETE");
+	log.info("OP: DELETE");
 	String srvName = obj.get("srvName").getAsString();
 	String srvType = obj.get("srvType").getAsString();
 	System.out.println("Delete SRV: "+srvName+" of type: "+srvType+" for: " + systemName);
@@ -152,7 +151,7 @@ public class DataManagerResource {
 	  }
 	}
 	if (!found) {
-	  System.out.println("  service:" +srvName + " does not exists");
+          log.info("service:" +srvName + " does not exists");
 	  Gson gson = new Gson();
 	  JsonObject answer = new JsonObject();
 	  answer.addProperty("createResult", "No such service");
@@ -168,12 +167,12 @@ public class DataManagerResource {
 	  return Response.status(500).entity("{\"x\": \"Could not delete service\"}").type(MediaType.APPLICATION_JSON).build();
 
       } else {
-	System.out.println("Unsupported OP: " + op);
+        log.debug("Unsupported operation: " + op);
 	Response re = Response.status(300).build();
 	return re;
       }
     } catch(Exception je){
-      System.out.println(je.toString());
+      log.debug(je.toString());
       Response re = Response.status(300).build();
       return re;
     }
@@ -188,8 +187,8 @@ public class DataManagerResource {
     int statusCode = 0;
     int count = Integer.parseInt(count_s);
      
-    System.out.println("Historian GET for system '"+systemName+"', service '"+serviceName+"'"); 
-    System.out.println("getData requested with count: " + count);
+    log.info("Historian GET for system '"+systemName+"', service '"+serviceName+"'"); 
+    log.info("getData requested with count: " + count);
 
     MultivaluedMap<String, String> queryParams = uriInfo.getQueryParameters(); 
     int i=0;
@@ -198,7 +197,7 @@ public class DataManagerResource {
     do {
       sig = queryParams.getFirst("sig"+i);
       if (sig != null) {
-        System.out.println("sig["+i+"]: "+sig+"");
+        //System.out.println("sig["+i+"]: "+sig+"");
 	signals.add(sig);
       }
       i++;
@@ -221,20 +220,18 @@ public class DataManagerResource {
   @Consumes("application/senml+json")
   public Response PutData(@PathParam("systemName") String systemName, @PathParam("serviceName") String serviceName, @Valid Vector<SenMLMessage> sml) {
     boolean statusCode = DataManagerService.createEndpoint(serviceName);
-    //System.out.println("Historian PUT for system '"+systemName+"', service '"+serviceName+"'"); 
-    //System.out.println("Got SenML message");
+    log.info("Historian PUT for system '"+systemName+"', service '"+serviceName+"'"); 
 
     SenMLMessage head = sml.firstElement();
     if(head.getBt() == null)
       head.setBt((double)System.currentTimeMillis() / 1000.0);
 
     for(SenMLMessage s: sml) {
-      System.out.println("object" + s.toString());
+      //System.out.println("object" + s.toString());
       if(s.getT() == null && s.getBt() != null)
 	s.setT(0.0);
     } 
     statusCode = DataManagerService.updateEndpoint(serviceName, sml);
-    //System.out.println("putData returned with status code: " + statusCode);
 
     String jsonret = "{\"p\": "+ 0 +",\"x\": 0}";
     return Response.ok(jsonret, MediaType.APPLICATION_JSON).build();
@@ -247,6 +244,7 @@ public class DataManagerResource {
   @Produces("application/json")
   public Response getSystems() {
     Gson gson = new Gson();
+
     List<String> pes = ProxyService.getAllEndpoints();
     JsonObject answer = new JsonObject();
     JsonElement systemlist = gson.toJsonTree(pes);
@@ -264,7 +262,7 @@ public class DataManagerResource {
     int statusCode = 0;
     List<ProxyElement> pes = ProxyService.getEndpoints(systemName);
     if (pes.size() == 0) {
-      System.out.println("proxy GET to systemName: " + systemName + " not found");
+      log.info("proxy GET to systemName: " + systemName + " not found");
       return Response.status(Status.NOT_FOUND).build();
     }
 
@@ -272,6 +270,7 @@ public class DataManagerResource {
     for (ProxyElement pe: pes) {
       systems.add(pe.serviceName);
     }
+
     Gson gson = new Gson();
     JsonObject answer = new JsonObject();
     JsonElement servicelist = gson.toJsonTree(systems);
@@ -298,7 +297,7 @@ public class DataManagerResource {
       } else if(op.equals("create")){
 	String srvName = obj.get("srvName").getAsString();
 	String srvType = obj.get("srvType").getAsString();
-	System.out.println("Create SRV: "+srvName+" of type: "+srvType+" for: " + systemName);
+	log.info("Create SRV: "+srvName+" of type: "+srvType+" for: " + systemName);
 
 	/* check if service already exists */
 	ArrayList<ProxyElement> services = ProxyService.getEndpoints(systemName);
@@ -322,12 +321,13 @@ public class DataManagerResource {
       } else if(op.equals("delete")){
 
       } else {
-	System.out.println("Unsupported OP: " + op);
+	log.debug("Unsupported OP: " + op);
 	Response re = Response.status(300).build();
 	return re;
       }
+
     } catch(Exception je){
-      System.out.println(je.toString());
+      log.error(je.toString());
       Response re = Response.status(300).build();
       return re;
     }
@@ -343,8 +343,7 @@ public class DataManagerResource {
     int statusCode = 0;
     ProxyElement pe = ProxyService.getEndpoint(serviceName);
     if (pe == null) {
-      System.out.println("proxy GET to serviceName: " + serviceName + " not found");
-      //System.out.println("proxyGet returned with NULL data");
+      log.info("proxy GET to serviceName: " + serviceName + " not found");
       return Response.status(Status.NOT_FOUND).build();
     }
 
@@ -363,7 +362,7 @@ public class DataManagerResource {
 
     //System.out.println("sml: "+ sml + "\t"+sml.toString());
     boolean statusCode = ProxyService.updateEndpoint(serviceName, sml);
-    System.out.println("putData/SenML returned with status code: " + statusCode + " from: " + sml.get(0).getBn() + " at: " + sml.get(0).getBt());
+    log.info("putData/SenML returned with status code: " + statusCode + " from: " + sml.get(0).getBn() + " at: " + sml.get(0).getBt());
 
     String jsonret = "{\"rc\": 0}";
     return Response.ok(jsonret, MediaType.APPLICATION_JSON).build();

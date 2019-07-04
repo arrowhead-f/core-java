@@ -60,7 +60,7 @@ final class ProxyService {
     while (epi.hasNext()) {
       ProxyElement pe = epi.next();
       if (systemName.equals(pe.systemName)) {
-	System.out.println("Found endpoint: " + pe.serviceName);
+	//System.out.println("Found endpoint: " + pe.serviceName);
         res.add(pe);
       }
     }
@@ -77,7 +77,7 @@ final class ProxyService {
 
     while (epi.hasNext()) {
       ProxyElement curpe = epi.next();
-      System.out.println("Found endpoint: " + curpe.serviceName);
+      //System.out.println("Found endpoint: " + curpe.serviceName);
       if (serviceName.equals(curpe.serviceName)) {
         return curpe;
       }
@@ -98,9 +98,9 @@ final class ProxyService {
     while (epi.hasNext()) {
       ProxyElement pe = epi.next();
       if (serviceName.equals(pe.serviceName)) {
-	System.out.println("Found endpoint: " + pe.serviceName);
+	//System.out.println("Found endpoint: " + pe.serviceName);
 	pe.msg = msg; //.get(0);
-	System.out.println("Updating with: " + msg.toString());
+	//System.out.println("Updating with: " + msg.toString());
         return true;
       }
     }
@@ -119,11 +119,11 @@ final class ProxyService {
     while (epi.hasNext()) {
       ProxyElement pe = epi.next();
       if (serviceName.equals(pe.serviceName)) {
-	System.out.println("Found endpoint: " + pe.serviceName);
+	//System.out.println("Found endpoint: " + pe.serviceName);
         return null; //pe.msg;
       }
     }
-    System.out.println("Endpoint: " + serviceName + " not found");
+    //System.out.println("Endpoint: " + serviceName + " not found");
     return null;
   }
 
